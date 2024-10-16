@@ -1,7 +1,8 @@
 import sys
 import numpy as np
+import time
 from network.socket_manager import SocketManager
-from utils import check_ip, handle_errors
+from utils import check_ip, check_timeout
 
 PORT = {"white":5800, "black":5801}
 V = True # in order to quickly enable or disable verbose
@@ -42,6 +43,8 @@ def main():
     ### GAME CYCLE ################################################################
     ###############################################################################
     
+    timeout = time.time() + timeout
+    
     # May be useful
     boards_history = []     # List of the boards, useful to track the game
     
@@ -50,6 +53,7 @@ def main():
             # 1) Read current state / state updated by the opponent move
             current_state = s.get_state()
             boards_history.append(current_state['board']) # memorize opponent move
+            check_timeout(timeout)
             
             if V : print(f"Current state:\n{current_state}")
 
@@ -62,13 +66,16 @@ def main():
                 _from = ...
                 _to = ...
                 move = (_from, _to, color) 
+                check_timeout(timeout)
                 
                 # 3) Send the move
                 s.send_move(move)
+                check_timeout(timeout)
                 
                 # 4) Read the new updated state after my move
                 current_state = s.get_state()
                 boards_history.append(current_state['board']) # memorize my move
+                check_timeout(timeout)
                     
             # Else the game ends for many reasons
             elif current_state['turn'] == "WHITEWIN":
