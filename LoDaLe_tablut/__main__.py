@@ -58,14 +58,14 @@ def main():
             if V : print(f"Current state:\n{current_state}")
 
             # If we are still playing
-            if current_state['turn'] == color:
+            if current_state['turn'] == color.upper():
                 if V : print("It's your turn")
 
                 # 2) Compute the move
                 # AI stuff in order to compute _from and _to
-                _from = ...
-                _to = ...
-                move = (_from, _to, color) 
+                _from = input("From: ")     # es. a5
+                _to = input("To: ")         # es. a7
+                move = (_from, _to, color.upper()) 
                 check_timeout(timeout)
                 
                 # 3) Send the move
