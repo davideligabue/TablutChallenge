@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import time
 from network.socket_manager import SocketManager
-from utils import check_ip, check_timeout
+from utils import check_ip, pretty_print
 
 PORT = {"WHITE":5800, "BLACK":5801}
 V = True # in order to quickly enable or disable verbose
@@ -55,7 +55,8 @@ def main():
             current_state = s.get_state()
             boards_history.append(current_state['board']) # memorize opponent move
             
-            if V : print(f"Current state:\n{current_state}")
+            # if V : print(f"Current table:\n{current_state}")
+            if V : print(f"Current table:\n"); pretty_print(current_state['board'])
 
             # If we are still playing
             if current_state['turn'] == color:
