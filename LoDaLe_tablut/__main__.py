@@ -2,7 +2,8 @@ import sys
 import numpy as np
 import time
 from network.socket_manager import SocketManager
-from utils import check_ip, pretty_print
+from utils import *
+from domain.board import Board
 
 PORT = {"WHITE":5800, "BLACK":5801}
 V = True # in order to quickly enable or disable verbose
@@ -46,6 +47,7 @@ def main():
     
     # May be useful
     boards_history = []     # List of the boards, useful to track the game
+    b = Board()
     
     try:
         while True:
@@ -53,30 +55,44 @@ def main():
             
             # 1) Read current state / state updated by the opponent move
             current_state = s.get_state()
-            boards_history.append(current_state['board']) # memorize opponent move
+            board = current_state['board']
+            turn = current_state['turn']
             
+            # memorize opponent move
+            boards_history.append(board) 
+            b.load_board(board)
+
             # if V : print(f"Current table:\n{current_state}")
-            if V : print(f"Current table:\n"); pretty_print(current_state['board'])
+            if V : print(f"Current table:\n"); pretty_print(b.current_board)
 
             # If we are still playing
-            if current_state['turn'] == color:
+            if turn == color:
                 if V : print("It's your turn")
 
                 # 2) Compute the move
                 timeout = timeout - (time.time() - initial_time) # consider initialization time
                 
                 # AI STUFF f(timeout, board) [forse board_history ??]
-                _from = input("From: ")     # es. a5
-                _to = input("To: ")         # es. a7
+
+                moves = b.get_all_moves(turn)[0]
+                _from = tuple2alfanum((moves[0], moves[1]))
+                _to = tuple2alfanum(moves[2][0])
                 
                 move = (_from, _to, color) 
+                if V : print(f"Move: {move}")
                 
                 # 3) Send the move
                 s.send_move(move)
                 
                 # 4) Read the new updated state after my move
                 current_state = s.get_state()
-                boards_history.append(current_state['board']) # memorize my move
+                board = current_state['board']
+                turn = current_state['turn']
+                
+                # memorize my move
+                boards_history.append(board) 
+                b.load_board(board)
+                if V : print(f"After my move:\n"); pretty_print(b.current_board)
                     
             # Else the game ends for many reasons
             elif current_state['turn'] == "WHITEWIN":

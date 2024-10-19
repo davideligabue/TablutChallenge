@@ -23,23 +23,28 @@ def check_ip(ip):
 #     return diff + time.time()
 
 def pretty_print(board):
-    # Dimensioni della scacchiera
+    # Board dimension
     n = board.shape[0]
     
-    # Stampa la riga delle coordinate delle colonne (A, B, C, ...)
+    # Literal labels (A, B, C, ...)
     column_labels = '    ' + '   '.join([chr(i + ord('A')) for i in range(n)])  # Quattro spazi
     print(column_labels)
     
-    # Separatore tra righe
+    # Separators
     separator = '  ' + '+---' * n + '+'
     
     for i in range(n):
-        # Stampa il separatore
         print(separator)
         
-        # Stampa il numero di riga e i pezzi della scacchiera
+        # Row + pieces
         row = f'{i+1:2d} ' + '|'.join([f' {cell[0]} ' if cell != 'EMPTY' else '   ' for cell in board[i]]) + ' |'
         print(row)
     
-    # Stampa l'ultimo separatore
     print(separator)
+    
+# TODO: capire come farla leggere alle sub cartelle
+def tuple2alfanum(tuple_pos):
+    row, col = tuple_pos
+    col_alfnum = chr(ord('a') + col)
+    row_alfnum = str(1+row)
+    return col_alfnum + row_alfnum
