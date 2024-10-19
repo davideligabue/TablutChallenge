@@ -1,3 +1,4 @@
+import random
 import sys
 import numpy as np
 import time
@@ -72,11 +73,19 @@ def main():
                 # 2) Compute the move
                 timeout = timeout - (time.time() - initial_time) # consider initialization time
                 
-                # AI STUFF f(timeout, board) [forse board_history ??]
-
-                moves = b.get_all_moves(turn)[0]
-                _from = tuple2alfanum((moves[0], moves[1]))
-                _to = tuple2alfanum(moves[2][0])
+                ### AI STUFF f(timeout, board) [forse board_history ??] ####
+                # 1) RANDOM PLAYER #########################################
+                all_possible_moves_for_all_pieceS = b.get_all_moves(turn)
+                _from_x, _from_y, all_possible_moves_for_one_piece = random.choice(all_possible_moves_for_all_pieceS)
+                random_move = random.choice(all_possible_moves_for_one_piece)
+                
+                # 2) ...
+                
+                #####
+                
+                # Translate 
+                _from = tuple2alfanum((_from_x, _from_y))
+                _to = tuple2alfanum(random_move)
                 
                 move = (_from, _to, color) 
                 if V : print(f"Move: {move}")

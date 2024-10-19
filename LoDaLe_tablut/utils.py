@@ -42,7 +42,6 @@ def pretty_print(board):
     
     print(separator)
     
-# TODO: capire come farla leggere alle sub cartelle
 def tuple2alfanum(tuple_pos):
     row, col = tuple_pos
     col_alfnum = chr(ord('a') + col)

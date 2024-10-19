@@ -1,5 +1,4 @@
 import numpy as np
-# from ..utils import *
 
 
 ################################################################################################
@@ -210,5 +209,3 @@ if __name__ == "__main__" :
     _to = moves[2][0]
     
     print(f"Moves: {tuple2alfanum(_from)} --> {tuple2alfanum(_to)}")
-    
-    
