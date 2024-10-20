@@ -169,43 +169,82 @@ class Board:
         
         return True
     
-    def is_capture(self, x, y, to_x, to_y):
-        # Determine which piece made the move
-        moved_piece = self.current_board[to_x][to_y]
+    def get_captures(self, from_x, from_y):
+        captures = []
+        moved_piece = self.current_board[from_x][from_y]
         
-        # Define directions for orthogonal movement
+        # Directions for orthogonal movement
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         
-        captures = []
-        
-        # Check each direction for possible captures
+        # Check all directions from (from_x, from_y) to see if any move results in a capture
         for dx, dy in directions:
-            capture_x, capture_y = x + dx, y + dy
-            opposite_x, opposite_y = x - dx, y - dy
+            x, y = from_x, from_y
             
-            # Ensure we're still within bounds
-            if not self.is_within_bounds(capture_x, capture_y) or not self.is_within_bounds(opposite_x, opposite_y):
-                continue
-            
-            # Capture logic for normal pieces (black or white)
-            if self.current_board[capture_x][capture_y] != 'EMPTY' and self.current_board[capture_x][capture_y] != moved_piece:
-                if self.is_opponent_piece(moved_piece, self.current_board[capture_x][capture_y]):
-                    # Check if the opposite tile contains an opponent's piece or is an impassable tile
-                    if (self.current_board[opposite_x][opposite_y] == moved_piece or
-                            self.is_special_tile(opposite_x, opposite_y)):
-                        captures.append((capture_x, capture_y))
+            # Move along the direction until we hit a block or the edge of the board
+            while True:
+                x += dx
+                y += dy
+                
+                # Stop if we go out of bounds
+                if not self.is_within_bounds(x, y):
+                    break
+                
+                # Stop if we hit a non-empty tile
+                if self.current_board[x][y] != 'EMPTY':
+                    break
+                
+                # Check if moving to (x, y) results in a capture
+                adj_x, adj_y = x + dx, y + dy  # Adjacent square in the direction we're checking
+                opp_x, opp_y = x + 2*dx, y + 2*dy  # Opposite square beyond the adjacent one
+
+                # Ensure adjacent and opposite squares are within bounds
+                if not (self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y)):
+                    continue
+
+                adj_piece = self.current_board[adj_x][adj_y]
+                opp_piece = self.current_board[opp_x][opp_y]
+
+                # Check if the adjacent piece is an opponent's piece and can be captured
+                if self.is_opponent_piece(moved_piece, adj_piece):
+                    if opp_piece == moved_piece or self.is_special_tile(opp_x, opp_y):
+                        captures.append((x, y))  # Add this position as a valid capture move
+
+        return captures if captures else None
+
+    def is_capture(self, from_x, from_y, to_x, to_y):
+        moved_piece = self.current_board[from_x][from_y]
+
+        # Directions for orthogonal movement
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         
-        # Special handling for the king's capture (surrounding on all 4 sides)
-        if self.current_board[x][y] == 'KING':
-            surrounding_tiles = [(x + dx, y + dy) for dx, dy in directions]
+        # Check in all directions for possible captures
+        for dx, dy in directions:
+            adj_x, adj_y = to_x + dx, to_y + dy  # Adjacent square in the direction of the move
+            opp_x, opp_y = to_x + 2*dx, to_y + 2*dy  # Opposite square beyond the adjacent one
+
+            # Ensure adjacent and opposite squares are within bounds
+            if not (self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y)):
+                continue
+
+            adj_piece = self.current_board[adj_x][adj_y]
+            opp_piece = self.current_board[opp_x][opp_y]
+
+            # Check if the adjacent piece is an opponent's piece and can be captured
+            if self.is_opponent_piece(moved_piece, adj_piece):
+                if opp_piece == moved_piece or self.is_special_tile(opp_x, opp_y):
+                    return True  # Capture found
+
+        # Special handling for capturing the king
+        if moved_piece == 'KING':
             count_black = 0
+            surrounding_tiles = [(to_x + dx, to_y + dy) for dx, dy in directions]
             for sx, sy in surrounding_tiles:
                 if self.is_within_bounds(sx, sy) and (self.current_board[sx][sy] == 'BLACK' or self.is_special_tile(sx, sy)):
                     count_black += 1
             if count_black == 4:  # King is surrounded on all four sides
-                captures.append((x, y))
+                return True
         
-        return captures if captures else None
+        return False
 
     def get_all_moves_for_piece(self, x, y):
         piece_type = self.current_board[x][y]
