@@ -2,9 +2,9 @@ import random
 import sys
 import numpy as np
 import time
-from network.socket_manager import SocketManager
+from socket_manager import SocketManager
+from board import Board
 from utils import *
-from domain.board import Board
 
 PORT = {"WHITE":5800, "BLACK":5801}
 V = True # in order to quickly enable or disable verbose
@@ -59,7 +59,7 @@ def main():
             board = current_state['board']
             turn = current_state['turn']
             
-            # memorize opponent move
+            # Memorize opponent move
             boards_history.append(board) 
             b.load_board(board)
 

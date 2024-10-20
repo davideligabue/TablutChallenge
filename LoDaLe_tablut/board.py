@@ -1,40 +1,5 @@
 import numpy as np
-
-
-################################################################################################
-# METODI DI UTILS CHE NON RIESCO A FARGLI LEGGERE ZIO PERA #####################################
-################################################################################################
-
-# TODO: rimediare assolutamente
-
-def pretty_print(board):
-    # Board dimension
-    n = board.shape[0]
-    
-    # Literal labels (A, B, C, ...)
-    column_labels = '    ' + '   '.join([chr(i + ord('A')) for i in range(n)])  # Quattro spazi
-    print(column_labels)
-    
-    # Separators
-    separator = '  ' + '+---' * n + '+'
-    
-    for i in range(n):
-        print(separator)
-        
-        # Row + pieces
-        row = f'{i+1:2d} ' + '|'.join([f' {cell[0]} ' if cell != 'EMPTY' else '   ' for cell in board[i]]) + ' |'
-        print(row)
-    
-    print(separator)
-    
-def tuple2alfanum(tuple_pos):
-    row, col = tuple_pos
-    col_alfnum = chr(ord('a') + col)
-    row_alfnum = str(1+row)
-    return col_alfnum + row_alfnum
-
-################################################################################################
-################################################################################################
+from utils import *
 
 # CONSTANTS
 WHITE_PLAYER = "WHITE"
@@ -54,7 +19,7 @@ ESCAPES = {
 }
 
 '''
-STATE:
+STATE (initial) :
 
 {
     'board': 
@@ -72,9 +37,7 @@ STATE:
     'turn': 
         'WHITE'
 }
-'''
 
-'''
 REPRESENTED AS:
 
     A   B   C   D   E   F   G   H   I
@@ -111,11 +74,9 @@ class Board:
         self.board_history.append(board)
         
     def is_within_bounds(self, x, y):
-        """Check if the position is within the 9x9 grid."""
         return 0 <= x < 9 and 0 <= y < 9
 
     def is_valid_move(self, x, y, piece_type):
-        """Check if the position (x, y) is a valid move destination for the piece."""
         if not self.is_within_bounds(x, y):
             return False
         if self.current_board[x][y] != 'EMPTY':
@@ -127,7 +88,6 @@ class Board:
         return True
     
     def get_moves_in_direction(self, x, y, dx, dy, piece_type):
-        """Generate all possible moves in one orthogonal direction."""
         moves = []
         new_x, new_y = x + dx, y + dy
         while self.is_valid_move(new_x, new_y, piece_type):
@@ -137,7 +97,6 @@ class Board:
         return moves
 
     def get_all_moves_for_piece(self, x, y):
-        """Get all possible moves for a piece at position (x, y)."""
         piece_type = self.current_board[x][y]
         moves = []
         if piece_type not in ['WHITE', 'BLACK', 'KING']:
@@ -151,22 +110,18 @@ class Board:
         return moves
     
     def get_all_moves(self, turn):
-        """Get all possible moves for the current player (WHITE or BLACK)."""
         all_moves = []
         for x in range(9):
             for y in range(9):
                 piece = self.current_board[x][y]
-                # print(piece, (x,y), tuple2alfanum((x,y)))
                 if turn == 'WHITE' and piece in ['WHITE', 'KING']:
                     piece_moves = self.get_all_moves_for_piece(x, y)
                     if piece_moves:  # Only add if there are moves
                         all_moves.append((x, y, piece_moves))
-                        # print(f"Piece at {tuple2alfanum((x, y))} can move to: {[tuple2alfanum(move) for move in piece_moves]}")
                 elif turn == 'BLACK' and piece == 'BLACK':
                     piece_moves = self.get_all_moves_for_piece(x, y)
                     if piece_moves:  # Only add if there are moves
                         all_moves.append((x, y, piece_moves))
-                        # print(f"Piece at {tuple2alfanum((x, y))} can move to: {[tuple2alfanum(move) for move in piece_moves]}")
         return all_moves
 
     
