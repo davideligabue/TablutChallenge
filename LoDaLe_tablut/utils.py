@@ -47,4 +47,3 @@ def tuple2alfanum(tuple_pos):
     col_alfnum = chr(ord('a') + col)
     row_alfnum = str(1+row)
     return col_alfnum + row_alfnum
-
