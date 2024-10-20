@@ -1,10 +1,10 @@
 #!/bin/bash
 
-SERVER_PATH=$(pwd)
+SERVER_PATH="$(pwd)/Test"
 PLAYER_PATH="$SERVER_PATH/../LoDaLe_tablut"
 
 # Open terminal tab for server
-osascript -e "tell application \"Terminal\" to do script \"cd $SERVER_PATH && java -jar ./Server.jar\""
+osascript -e "tell application \"Terminal\" to do script \"cd $SERVER_PATH && java -jar Server.jar\""
 
 # Ensure enough time for correct initialization of server 
 sleep 1 
