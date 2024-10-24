@@ -138,6 +138,51 @@ class Board:
         # If all checks pass, the move is valid
         return True
 
+    def is_goal_state(self):
+        king_pos = None
+
+        # Find the King on the board
+        for i in range(9):
+            for j in range(9):
+                if self.board[i][j] == 'KING':
+                    king_pos = (i, j)
+                    break
+            if king_pos:
+                break
+
+        if not king_pos:
+            # If there's no King on the board, it's an invalid state, or the King has been captured
+            return self.turn == BLACK_PLAYER  # Black wins if the King has been captured
+
+        king_x, king_y = king_pos
+
+        # Check if the King is on an escape point (White victory)
+        if (king_x, king_y) in ESCAPES:
+            return self.turn == WHITE_PLAYER  # White wins if the King reaches an escape point
+
+        # Check if the King is surrounded (Black victory)
+        # Directions for orthogonal checking
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        surrounding_black = 0
+
+        for dx, dy in directions:
+            adj_x, adj_y = king_x + dx, king_y + dy
+
+            if not self.is_within_bounds(adj_x, adj_y):
+                continue
+
+            adj_piece = self.board[adj_x][adj_y]
+
+            # Check if it's either a black piece or a special tile (camp or castle)
+            if adj_piece == 'BLACK' or self.is_special_tile(adj_x, adj_y):
+                surrounding_black += 1
+
+        # The King is captured if surrounded on all four sides
+        if surrounding_black == 4:
+            return self.turn == BLACK_PLAYER  # Black wins if the King is surrounded
+
+        return False  # No player has won yet
+
     def get_moves_in_direction(self, x, y, dx, dy, piece_type):
         moves = []
         new_x, new_y = x + dx, y + dy

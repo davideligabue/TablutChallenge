@@ -1,15 +1,16 @@
-import random
 import sys
-import numpy as np
 import time
 from socket_manager import SocketManager
 from board import Board
 from utils import *
-from search_domain import Node
+from search import Node
+from heuristics import black_heuristics, white_heuristics
 
 PORT = {"WHITE":5800, "BLACK":5801}
 VERBOSE = True      # quickly enable/disable verbose
-TYPE = "random"     # quickly choose the type of search
+TYPE = "random"             # quickly choose the type of search
+# TYPE = "breadth-first"      # quickly choose the type of search
+# TYPE = "depth-first"        # quickly choose the type of search
 
 def main():
     
@@ -57,12 +58,10 @@ def main():
             
             ## 1) Read current state / state updated by the opponent move
             current_state = s.get_state()
-            board = current_state['board']
-            turn = current_state['turn']
             b = Board(state=current_state)
             
             # Memorize opponent move
-            boards_history.append(board) 
+            boards_history.append(b) 
 
             # if VERBOSE : print(f"Current table:\n{current_state}")
             if VERBOSE : 
@@ -70,16 +69,22 @@ def main():
                 b.pretty_print()
 
             # If we are still playing
-            if turn == color:
+            if b.turn == color:
                 if VERBOSE : print("It's your turn")
 
                 ## 2) Compute the move
                 timeout = timeout - (time.time() - initial_time) # consider initialization time
 
-                n = Node(b)                
+                heuristic = white_heuristics if color=="WHITE" else black_heuristics
+                n = Node(b, h=heuristic)     
+                
                 match TYPE:
                     case "random" : 
-                        _from, _to = n.random_search().move
+                        _from, _to = n.random_search()
+                    case "breadth-first" : 
+                        _from, _to = n.breadth_first_search(timeout)
+                    case "depth-first" : 
+                        _from, _to = n.depth_first_search(timeout)
                     case _ :
                         raise Exception("Search strategy not implemented yet")
                 
@@ -95,11 +100,9 @@ def main():
                 ## 4) Read the new updated state after my move
                 current_state = s.get_state()
                 b = Board(state=current_state)
-                board = current_state['board']
-                turn = current_state['turn']
                 
                 # memorize my move
-                boards_history.append(board) 
+                boards_history.append(b) 
                 if VERBOSE : 
                     print(f"After my move:\n")
                     b.pretty_print()

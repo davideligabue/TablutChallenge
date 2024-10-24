@@ -2,6 +2,7 @@ from typing import List, Optional, Callable, Tuple
 from board import Board
 import random
 from utils import *
+from collections import deque
 
 class Node:
     
@@ -73,7 +74,7 @@ class Node:
         for n in self.children :
             n.sibilings = self.children.copy().remove(n)
             
-        return self.children.copy()
+        return self.children.copy() 
             
     # TODO: c'è sicuramente altro da implementare
     
@@ -81,11 +82,76 @@ class Node:
     # SEARCH ALGORITHMS ##########################################################################################################################################
     ##############################################################################################################################################################
     
-    def random_search(self):
+    def random_search(self) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]] :
+        '''Random search over the children of the given node'''
         nodes = self.get_children()
-        return random.choice(nodes) 
+        return random.choice(nodes).move
     
-    
+    def depth_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        """Performs Depth-First Search (DFS) with a timeout, returning the best move found within the time limit."""
+        stack = [self]
+        visited = set()
+        start_time = time.time()  # Record the start time
+        best_node = None  # Track the best node encountered
+
+        while stack:
+            # Check if the timeout has been exceeded
+            if time.time() - start_time > timeout:
+                print("Timeout exceeded during depth-first search")
+                return best_node.move if best_node else None
+
+            current_node = stack.pop()
+            if current_node.state in visited:
+                continue
+            visited.add(current_node.state)
+
+            # Check if this is the best node (goal state) encountered so far
+            if current_node.state.is_goal_state():  # Assuming the method exists to check for a goal state
+                return current_node.move
+
+            # Update the best node as we explore
+            if best_node is None or current_node.h < best_node.h:
+                best_node = current_node
+
+            # Expand the current node and add its children to the stack
+            for child in current_node.get_children():
+                stack.append(child)
+
+        # Return the best node move if no goal was found within the time
+        return best_node.move if best_node else None
+
+    def breadth_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
+        """Performs Breadth-First Search (BFS) with a timeout, returning the best move found within the time limit."""
+        queue = deque([self])
+        visited = set()
+        start_time = time.time()  # Record the start time
+        best_node = None  # Track the best node encountered
+
+        while queue:
+            # Check if the timeout has been exceeded
+            if time.time() - start_time > timeout:
+                print("Timeout exceeded during breadth-first search")
+                return best_node.move if best_node else None
+
+            current_node = queue.popleft()
+            if current_node.state in visited:
+                continue
+            visited.add(current_node.state)
+
+            # Check if this is the best node (goal state) encountered so far
+            if current_node.state.is_goal_state():  # Assuming the method exists to check for a goal state
+                return current_node.move
+
+            # Update the best node as we explore
+            if best_node is None or current_node.h < best_node.h:
+                best_node = current_node
+
+            # Expand the current node and add its children to the queue
+            for child in current_node.get_children():
+                queue.append(child)
+
+        # Return the best node move if no goal was found within the time
+        return best_node.move if best_node else None
 
 
 
