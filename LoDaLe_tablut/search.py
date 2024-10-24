@@ -3,6 +3,7 @@ from board import Board
 import random
 from utils import *
 from collections import deque
+from PLAYER import VERBOSE
 
 class Node:
     
@@ -88,7 +89,7 @@ class Node:
         return random.choice(nodes).move
     
     def depth_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        """Performs Depth-First Search (DFS) with a timeout, returning the best move found within the time limit."""
+        '''Depth-First Search (DFS) from the given node'''
         stack = [self]
         visited = set()
         start_time = time.time()  # Record the start time
@@ -97,7 +98,7 @@ class Node:
         while stack:
             # Check if the timeout has been exceeded
             if time.time() - start_time > timeout:
-                print("Timeout exceeded during depth-first search")
+                if VERBOSE : print("Timeout exceeded during depth-first search")
                 return best_node.move if best_node else None
 
             current_node = stack.pop()
@@ -121,7 +122,7 @@ class Node:
         return best_node.move if best_node else None
 
     def breadth_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        """Performs Breadth-First Search (BFS) with a timeout, returning the best move found within the time limit."""
+        '''Breadth-First Search (BFS) from the given node'''
         queue = deque([self])
         visited = set()
         start_time = time.time()  # Record the start time
@@ -130,7 +131,7 @@ class Node:
         while queue:
             # Check if the timeout has been exceeded
             if time.time() - start_time > timeout:
-                print("Timeout exceeded during breadth-first search")
+                if VERBOSE : print("Timeout exceeded during breadth-first search")
                 return best_node.move if best_node else None
 
             current_node = queue.popleft()
@@ -152,6 +153,7 @@ class Node:
 
         # Return the best node move if no goal was found within the time
         return best_node.move if best_node else None
+
 
 
 
