@@ -8,8 +8,8 @@ from heuristics import black_heuristics, white_heuristics
 
 PORT = {"WHITE":5800, "BLACK":5801}
 VERBOSE = True      # quickly enable/disable verbose
-TYPE = "random"             # quickly choose the type of search
-# TYPE = "breadth-first"      # quickly choose the type of search
+# TYPE = "random"             # quickly choose the type of search
+TYPE = "breadth-first"      # quickly choose the type of search
 # TYPE = "depth-first"        # quickly choose the type of search
 
 def main():

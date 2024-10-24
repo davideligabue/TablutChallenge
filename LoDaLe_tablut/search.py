@@ -3,7 +3,8 @@ from board import Board
 import random
 from utils import *
 from collections import deque
-from PLAYER import VERBOSE
+
+VERBOSE = True
 
 class Node:
     
@@ -98,7 +99,9 @@ class Node:
         while stack:
             # Check if the timeout has been exceeded
             if time.time() - start_time > timeout:
-                if VERBOSE : print("Timeout exceeded during depth-first search")
+                if VERBOSE : 
+                    print("Timeout exceeded during depth-first search")
+                    print(best_node.move)
                 return best_node.move if best_node else None
 
             current_node = stack.pop()
@@ -131,7 +134,9 @@ class Node:
         while queue:
             # Check if the timeout has been exceeded
             if time.time() - start_time > timeout:
-                if VERBOSE : print("Timeout exceeded during breadth-first search")
+                if VERBOSE : 
+                    print("Timeout exceeded during breadth-first search")
+                    print(best_node.move)
                 return best_node.move if best_node else None
 
             current_node = queue.popleft()

@@ -1,4 +1,3 @@
 # tablut-challenge
 
-1) Forse una classe Board potrebbe avere senso per gestirne meglio la stampa
-2)
+1) Si può evitare di calcolare sempre la posizione del re e semplicemente metterlo come attributo di Board e aggiornarlo con gli spostamenti (sennò deve ciclare ogni volta su tutta la tabella)
