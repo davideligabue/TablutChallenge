@@ -1,5 +1,5 @@
 import random
-from board import Board
+from board_prova import Board
 
 def random_choice(board:Board, turn) :
     all_possible_moves_for_all_pieceS = board.get_all_moves(turn)

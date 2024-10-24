@@ -65,13 +65,14 @@ REPRESENTED AS:
 
 class Board:
 
-    def __init__(self, state):
-        self.turn = state['turn']
-        # Board must be np.ndarray
-        self.board = state['board'] \
-                    if type(state['board'])==np.ndarray \
-                    else np.array(state['board'])   
+    def __init__(self):
+        self.current_board = None
+        self.board_history = []
     
+    def load_board(self, board):
+        self.current_board = board
+        self.board_history.append(board)
+            
     def is_within_bounds(self, x, y):
         return 0 <= x < 9 and 0 <= y < 9
 
@@ -98,7 +99,7 @@ class Board:
             return False
         
         # Check if the destination is occupied
-        if self.board[to_x][to_y] != 'EMPTY':
+        if self.current_board[to_x][to_y] != 'EMPTY':
             return False
         
         # Check if the move is orthogonal (pieces can only move in straight lines)
@@ -110,7 +111,7 @@ class Board:
         dy = np.sign(to_y - from_y)  # +1, -1, or 0 ==> orthogonal directions
         current_x, current_y = from_x + dx, from_y + dy
         while current_x != to_x or current_y != to_y:
-            if self.board[current_x][current_y] != 'EMPTY':
+            if self.current_board[current_x][current_y] != 'EMPTY':
                 return False
             current_x += dx
             current_y += dy
@@ -151,26 +152,26 @@ class Board:
         # Check if there are no black pieces blocking the escape path for the king
         if to_x == 0:  # Top escapes
             for x in range(to_x + 1, 9):
-                if self.board[x][to_y] == 'BLACK':
+                if self.current_board[x][to_y] == 'BLACK':
                     return False
         elif to_x == 8:  # Bottom escapes
             for x in range(0, to_x):
-                if self.board[x][to_y] == 'BLACK':
+                if self.current_board[x][to_y] == 'BLACK':
                     return False
         elif to_y == 0:  # Left escapes
             for y in range(to_y + 1, 9):
-                if self.board[to_x][y] == 'BLACK':
+                if self.current_board[to_x][y] == 'BLACK':
                     return False
         elif to_y == 8:  # Right escapes
             for y in range(0, to_y):
-                if self.board[to_x][y] == 'BLACK':
+                if self.current_board[to_x][y] == 'BLACK':
                     return False
         
         return True
     
     def get_captures(self, from_x, from_y):
         captures = []
-        moved_piece = self.board[from_x][from_y]
+        moved_piece = self.current_board[from_x][from_y]
         
         # Directions for orthogonal movement
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -189,7 +190,7 @@ class Board:
                     break
                 
                 # Stop if we hit a non-empty tile
-                if self.board[x][y] != 'EMPTY':
+                if self.current_board[x][y] != 'EMPTY':
                     break
                 
                 # Check if moving to (x, y) results in a capture
@@ -200,8 +201,8 @@ class Board:
                 if not (self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y)):
                     continue
 
-                adj_piece = self.board[adj_x][adj_y]
-                opp_piece = self.board[opp_x][opp_y]
+                adj_piece = self.current_board[adj_x][adj_y]
+                opp_piece = self.current_board[opp_x][opp_y]
 
                 # Check if the adjacent piece is an opponent's piece and can be captured
                 if self.is_opponent_piece(moved_piece, adj_piece):
@@ -211,7 +212,7 @@ class Board:
         return captures if captures else None
 
     def is_capture(self, from_x, from_y, to_x, to_y):
-        moved_piece = self.board[from_x][from_y]
+        moved_piece = self.current_board[from_x][from_y]
 
         # Directions for orthogonal movement
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -225,8 +226,8 @@ class Board:
             if not (self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y)):
                 continue
 
-            adj_piece = self.board[adj_x][adj_y]
-            opp_piece = self.board[opp_x][opp_y]
+            adj_piece = self.current_board[adj_x][adj_y]
+            opp_piece = self.current_board[opp_x][opp_y]
 
             # Check if the adjacent piece is an opponent's piece and can be captured
             if self.is_opponent_piece(moved_piece, adj_piece):
@@ -238,51 +239,15 @@ class Board:
             count_black = 0
             surrounding_tiles = [(to_x + dx, to_y + dy) for dx, dy in directions]
             for sx, sy in surrounding_tiles:
-                if self.is_within_bounds(sx, sy) and (self.board[sx][sy] == 'BLACK' or self.is_special_tile(sx, sy)):
+                if self.is_within_bounds(sx, sy) and (self.current_board[sx][sy] == 'BLACK' or self.is_special_tile(sx, sy)):
                     count_black += 1
             if count_black == 4:  # King is surrounded on all four sides
                 return True
         
         return False
-    
-    def apply_move(self, from_pos, to_pos):
-        _from_x, _from_y = from_pos
-        _to_x, _to_y = to_pos
-
-        # Controlla se il movimento è valido
-        piece_type = self.board[_from_x][_from_y]
-        if not self.is_valid_move(_from_x, _from_y, _to_x, _to_y, piece_type):
-            raise ValueError("Invalid move")
-
-        # Esegue il movimento
-        self.board[_to_x][_to_y] = piece_type  # Sposta il pezzo nella nuova posizione
-        self.board[_from_x][_from_y] = 'EMPTY'  # Libera la posizione precedente
-
-        # Gestisce la cattura, se presente
-        if self.is_capture(_from_x, _from_y, _to_x, _to_y):
-            self.capture_piece(_from_x, _from_y, _to_x, _to_y)
-
-        # Cambia il turno
-        self.turn = WHITE_PLAYER if self.turn == BLACK_PLAYER else BLACK_PLAYER
-
-    def capture_piece(self, from_x, from_y, to_x, to_y):
-        # Logica per rimuovere il pezzo catturato, se necessario
-        moved_piece = self.board[from_x][from_y]
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        
-        for dx, dy in directions:
-            adj_x, adj_y = to_x + dx, to_y + dy
-            opp_x, opp_y = to_x + 2*dx, to_y + 2*dy
-
-            # Controlla se ci sono pezzi avversari da catturare
-            if self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y):
-                adj_piece = self.board[adj_x][adj_y]
-                if self.is_opponent_piece(moved_piece, adj_piece):
-                    # Cattura il pezzo avversario
-                    self.board[adj_x][adj_y] = 'EMPTY'  # Rimuovi il pezzo avversario
 
     def get_all_moves_for_piece(self, x, y):
-        piece_type = self.board[x][y]
+        piece_type = self.current_board[x][y]
         moves = []
         if piece_type not in ['WHITE', 'BLACK', 'KING']:
             return moves
@@ -294,40 +259,20 @@ class Board:
         
         return moves
     
-    def get_all_moves(self):
+    def get_all_moves(self, turn):
         all_moves = []
         for x in range(9):
             for y in range(9):
-                piece = self.board[x][y]
-                if self.turn == 'WHITE' and piece in ['WHITE', 'KING']:
+                piece = self.current_board[x][y]
+                if turn == 'WHITE' and piece in ['WHITE', 'KING']:
                     piece_moves = self.get_all_moves_for_piece(x, y) 
                     if piece_moves:  # Only add if there are moves
                         all_moves.append((x, y, piece_moves))
-                elif self.turn == 'BLACK' and piece == 'BLACK':
+                elif turn == 'BLACK' and piece == 'BLACK':
                     piece_moves = self.get_all_moves_for_piece(x, y)
                     if piece_moves:  # Only add if there are moves
                         all_moves.append((x, y, piece_moves))
         return all_moves
-    
-    def pretty_print(self):
-        # Board dimension
-        n = self.board.shape[0]
-        
-        # Literal labels (A, B, C, ...)
-        column_labels = '    ' + '   '.join([chr(i + ord('A')) for i in range(n)])  # Quattro spazi
-        print(column_labels)
-        
-        # Separators
-        separator = '  ' + '+---' * n + '+'
-        
-        for i in range(n):
-            print(separator)
-            
-            # Row + pieces
-            row = f'{i+1:2d} ' + '|'.join([f' {cell[0]} ' if cell != 'EMPTY' else '   ' for cell in self.board[i]]) + ' |'
-            print(row)
-        
-        print(separator)
 
     
 # if __name__ == "__main__" :

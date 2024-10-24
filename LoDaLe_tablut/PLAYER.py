@@ -4,8 +4,8 @@ import numpy as np
 import time
 from socket_manager import SocketManager
 from board import Board
-from search_algorithms import *
 from utils import *
+from search_domain import Node
 
 PORT = {"WHITE":5800, "BLACK":5801}
 VERBOSE = True      # quickly enable/disable verbose
@@ -50,7 +50,6 @@ def main():
     
     # May be useful
     boards_history = []     # List of the boards, useful to track the game
-    b = Board()
     
     try:
         while True:
@@ -60,13 +59,15 @@ def main():
             current_state = s.get_state()
             board = current_state['board']
             turn = current_state['turn']
+            b = Board(state=current_state)
             
             # Memorize opponent move
             boards_history.append(board) 
-            b.load_board(board)
 
             # if VERBOSE : print(f"Current table:\n{current_state}")
-            if VERBOSE : print(f"Current table:\n"); pretty_print(b.current_board)
+            if VERBOSE : 
+                print(f"Current table:\n")
+                b.pretty_print()
 
             # If we are still playing
             if turn == color:
@@ -74,17 +75,15 @@ def main():
 
                 ## 2) Compute the move
                 timeout = timeout - (time.time() - initial_time) # consider initialization time
-                
-                # Search algorithms
+
+                n = Node(b)                
                 match TYPE:
-                    case "random":  
-                        _from, _to = random_choice(board=b, turn=turn)
-                    # case "xyx":
-                    #     _from, _to = ...
+                    case "random" : 
+                        _from, _to = n.random_search().move
                     case _ :
-                        raise Exception("Search type not implemented yet")
+                        raise Exception("Search strategy not implemented yet")
                 
-                # Translate 
+                # Translate the move
                 _from = tuple2alfanum(_from)
                 _to = tuple2alfanum(_to)
                 move = (_from, _to, color) 
@@ -95,13 +94,15 @@ def main():
                 
                 ## 4) Read the new updated state after my move
                 current_state = s.get_state()
+                b = Board(state=current_state)
                 board = current_state['board']
                 turn = current_state['turn']
                 
                 # memorize my move
                 boards_history.append(board) 
-                b.load_board(board)
-                if VERBOSE : print(f"After my move:\n"); pretty_print(b.current_board)
+                if VERBOSE : 
+                    print(f"After my move:\n")
+                    b.pretty_print()
                     
             # Else the game ends for many reasons
             elif current_state['turn'] == "WHITEWIN":
