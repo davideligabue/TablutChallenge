@@ -7,10 +7,15 @@ from search import Node
 from heuristics import black_heuristics, white_heuristics
 
 PORT = {"WHITE":5800, "BLACK":5801}
+
 VERBOSE = True      # quickly enable/disable verbose
-# TYPE = "random"             # quickly choose the type of search
-TYPE = "breadth-first"      # quickly choose the type of search
-# TYPE = "depth-first"        # quickly choose the type of search
+
+# TYPE = "random"                            # quickly choose the type of search
+# TYPE = "breadth-first"                     # quickly choose the type of search
+# TYPE = "depth-first"                       # quickly choose the type of search
+# TYPE = "greedy"                            # quickly choose the type of search
+# TYPE = "A*"                                # quickly choose the type of search
+TYPE = "A*_alpha_beta_cut"                 # quickly choose the type of search
 
 def main():
     
@@ -85,6 +90,17 @@ def main():
                         _from, _to = n.breadth_first_search(timeout)
                     case "depth-first" : 
                         _from, _to = n.depth_first_search(timeout)
+                    case "greedy" : 
+                        _from, _to = n.greedy_best_first_search(timeout)
+                    case "A*" : 
+                        _from, _to = n.a_star_search(timeout)
+                    case "A*_alpha_beta_cut" : 
+                        num_opponent_pred = 2
+                        _from, _to = n.a_star_with_opponent_prediction(
+                                        depth=num_opponent_pred, 
+                                        timeout=timeout - num_opponent_pred  # giving less time because time will get 
+                                                                             # lost in current-opponent steps
+                                    )
                     case _ :
                         raise Exception("Search strategy not implemented yet")
                 
