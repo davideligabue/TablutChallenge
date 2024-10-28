@@ -11,11 +11,11 @@ PORT = {"WHITE":5800, "BLACK":5801}
 VERBOSE = True      # quickly enable/disable verbose
 
 # TYPE = "random"                            # quickly choose the type of search
-# TYPE = "breadth-first"                     # quickly choose the type of search
+TYPE = "breadth-first"                     # quickly choose the type of search
 # TYPE = "depth-first"                       # quickly choose the type of search
 # TYPE = "greedy"                            # quickly choose the type of search
 # TYPE = "A*"                                # quickly choose the type of search
-TYPE = "A*_alpha_beta_cut"                 # quickly choose the type of search
+# TYPE = "A*_alpha_beta_cut"                 # quickly choose the type of search
 
 def main():
     
