@@ -39,11 +39,14 @@ if __name__ == "__main__":
         
     
     result_moves = []
+    result_games = []
     for i, filename in enumerate(tqdm(files, desc="Loading files")):
         file_path = os.path.join(path, filename)
         if os.path.isfile(file_path):
             pattern = re.compile(r"from\s+([a-iA-I][1-9])\s+to\s+([a-iA-I][1-9])", re.IGNORECASE)
             with open(file_path, "r") as file:
+                
+                # Memorize the moves
                 lines = file.readlines()
                 filtered_lines = [line for line in lines if pattern.search(line)]
                 moves = [
@@ -53,8 +56,16 @@ if __name__ == "__main__":
                         for line in filtered_lines]
                 if moves != [] : # null moves to be discarded
                     result_moves.append(np.array(moves))
+                    
+                    # Check result of match
+                    last_non_empty_line = next((line.strip() for line in reversed(lines) if line.strip()), None)
+                    if last_non_empty_line.strip().endswith("WW") : result_games.append("W")        # white wins
+                    elif last_non_empty_line.strip().endswith("BW") : result_games.append("B")      # black wins
+                    elif last_non_empty_line.strip().endswith("D") : result_games.append("D")       # draw
+                    else : result_games.append("D")                                                 # interrupted / bad formatted
+                    
     result_moves = np.array(result_moves, dtype=object)
-    print(len(result_moves))
+    result_games = np.array(result_games, dtype=str)
                 
     # for i, match in enumerate(result_moves) :
     #     print(f"{files[i]} \t {len(match)} moves")
@@ -62,3 +73,4 @@ if __name__ == "__main__":
     # Optionally save the results
     # np.save("dataset_tabelle.npy", result_tables)
     np.save("dataset/dataset_moves.npy", result_moves)
+    np.save("dataset/dataset_results.npy", result_games)
