@@ -70,7 +70,9 @@ class Node:
             self.children.append(Node(  state=b, 
                                         parent=self, 
                                         depth=self.depth+1,
-                                        move=res_moves[i]))
+                                        move=res_moves[i]
+                                    )
+                                )
         
         # Build the sibilings of each node
         for n in self.children :
