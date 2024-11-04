@@ -62,7 +62,9 @@ if __name__ == "__main__":
                     if last_non_empty_line.strip().endswith("WW") : result_games.append("W")        # white wins
                     elif last_non_empty_line.strip().endswith("BW") : result_games.append("B")      # black wins
                     elif last_non_empty_line.strip().endswith("D") : result_games.append("D")       # draw
-                    else : result_games.append("D")                                                 # interrupted / bad formatted
+                    else : 
+                        result_games.append("I")                                                 # interrupted / bad formatted
+                        print(file_path)
                     
     result_moves = np.array(result_moves, dtype=object)
     result_games = np.array(result_games, dtype=str)

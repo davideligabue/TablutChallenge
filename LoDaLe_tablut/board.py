@@ -93,6 +93,23 @@ class Board:
         return False
 
     def is_valid_move(self, from_x, from_y, to_x, to_y, piece_type):
+        
+        # Black can't move the king
+        if piece_type=="KING" and self.turn=="BLACK":
+            return False
+        
+        # Can't move opponents pieces
+        if (piece_type=="WHITE" or piece_type=="BLACK") and self.turn!=piece_type:
+            return False
+        
+        # Can't move the empty pos
+        if piece_type=="EMPTY":
+            return False
+        
+        # Can't move the tower
+        if piece_type=="THRONE":
+            return False
+        
         # Check if the destination is within board bounds
         if not self.is_within_bounds(to_x, to_y):
             return False
@@ -336,7 +353,7 @@ class Board:
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         for dx, dy in directions:
             moves.extend(self.get_moves_in_direction(x, y, dx, dy, piece_type))
-        
+
         return moves
     
     def get_all_moves(self):

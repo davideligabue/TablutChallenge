@@ -1,5 +1,6 @@
 import ipaddress
 import time
+from collections import Counter
 
 def check_ip(ip):
     '''
@@ -47,3 +48,32 @@ def tuple2alfanum(tuple_pos):
     col_alfnum = chr(ord('a') + col)
     row_alfnum = str(1+row)
     return col_alfnum + row_alfnum
+
+def alfnum2tuple(alfnum_pos):
+    col_alfnum, row_alfnum = tuple(alfnum_pos)
+    print(col_alfnum, row_alfnum)
+    col_tuple = ord(col_alfnum) - ord('a')
+    row_tuple = int(row_alfnum) - 1
+    return (row_tuple, col_tuple)
+
+def get_n_most_winning_move(dataset, results, n, color):
+
+    # Filter idxs
+    max_turns = max([len(match) for match in dataset])
+    if color[0]=="W" :
+        possible_idx = [2*i for i in range(max_turns)]   
+    else :
+        possible_idx = [2*i+1 for i in range(max_turns)]
+    
+    idx = possible_idx[n]          # which move (column)
+
+    idx_moves = []
+    for i, match in enumerate(dataset) :
+        try:
+            if results[i]==color[0] : # if wins
+                idx_moves.append(tuple(match[idx]))
+        except: continue
+        
+    move_counter = Counter(idx_moves)
+    most_common_moves = move_counter.most_common(None) # all the results
+    return most_common_moves

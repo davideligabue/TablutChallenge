@@ -5,17 +5,22 @@ from board import Board
 from utils import *
 from search import Node
 from heuristics import black_heuristics, white_heuristics
+import numpy as np
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
 VERBOSE = True      # quickly enable/disable verbose
 
-# TYPE = "random"                            # quickly choose the type of search
-TYPE = "breadth-first"                     # quickly choose the type of search
-# TYPE = "depth-first"                       # quickly choose the type of search
-# TYPE = "greedy"                            # quickly choose the type of search
-# TYPE = "A*"                                # quickly choose the type of search
-# TYPE = "A*_alpha_beta_cut"                 # quickly choose the type of search
+# TYPE = "search-algorithm"
+TYPE = "machine-learning"
+# TYPE = "genetic-algorithm"
+
+# SEARCH_TYPE = "random"                          
+SEARCH_TYPE = "breadth-first"                     
+# SEARCH_TYPE = "depth-first"                     
+# SEARCH_TYPE = "greedy"                          
+# SEARCH_TYPE = "A*"                              
+# SEARCH_TYPE = "A*_alpha_beta_cut"               
 
 def main():
     
@@ -57,6 +62,13 @@ def main():
     # May be useful
     boards_history = []     # List of the boards, useful to track the game
     
+    # Useful vars
+    if TYPE == "machine-learning" : 
+        dataset_path = "../dataset"
+        dataset = data = np.load(dataset_path + "/dataset_moves.npy", allow_pickle=True)
+        results = data = np.load(dataset_path + "/dataset_results.npy", allow_pickle=True)
+        n = 0
+    
     try:
         while True:
             initial_time = time.time()
@@ -78,37 +90,64 @@ def main():
                 if VERBOSE : print("It's your turn")
 
                 ## 2) Compute the move
-                timeout = timeout - (time.time() - initial_time) # consider initialization time
-
-                heuristic = white_heuristics if color=="WHITE" else black_heuristics
-                n = Node(b, h=heuristic)     
+                timeout = timeout - (time.time() - initial_time) # consider initialization time   
                 
                 match TYPE:
-                    case "random" : 
-                        _from, _to = n.random_search()
-                    case "breadth-first" : 
-                        _from, _to = n.breadth_first_search(timeout)
-                    case "depth-first" : 
-                        _from, _to = n.depth_first_search(timeout)
-                    case "greedy" : 
-                        _from, _to = n.greedy_best_first_search(timeout)
-                    case "A*" : 
-                        _from, _to = n.a_star_search(timeout)
-                    case "A*_alpha_beta_cut" : 
-                        num_opponent_pred = 2
-                        _from, _to = n.a_star_with_opponent_prediction(
-                                        depth=num_opponent_pred, 
-                                        timeout=timeout - num_opponent_pred  # giving less time because time will get 
-                                                                             # lost in current-opponent steps
-                                    )
-                    case _ :
-                        raise Exception("Search strategy not implemented yet")
-                
+                    case "search-algorithm" :
+                        heuristic = white_heuristics if color=="WHITE" else black_heuristics
+                        n = Node(b, h=heuristic)  
+                        
+                        match SEARCH_TYPE:
+                            case "random" : 
+                                _from, _to = n.random_search()
+                            case "breadth-first" : 
+                                _from, _to = n.breadth_first_search(timeout)
+                            case "depth-first" : 
+                                _from, _to = n.depth_first_search(timeout)
+                            case "greedy" : 
+                                _from, _to = n.greedy_best_first_search(timeout)
+                            case "A*" : 
+                                _from, _to = n.a_star_search(timeout)
+                            case "A*_alpha_beta_cut" : 
+                                num_opponent_pred = 2
+                                _from, _to = n.a_star_with_opponent_prediction(
+                                                depth=num_opponent_pred, 
+                                                timeout=timeout - num_opponent_pred  # giving less time because time will get 
+                                                                                    # lost in current-opponent steps
+                                            )
+                            case _ :
+                                raise Exception("Search strategy not implemented yet")
+                    case "genetic-algorithm" :
+                        move = ...
+                        pass
+                    case "machine-learning" :
+                        idx_moves = 0
+                        moves = get_n_most_winning_move(dataset, results, n, color)
+                        
+                        move = moves[idx_moves][0]
+                        from_x, from_y = alfnum2tuple(move[0])
+                        to_x, to_y = alfnum2tuple(move[1])
+                        
+                        while not b.is_valid_move(from_x, from_y, to_x, to_y, b.board[from_x][from_y]) :
+                            idx_moves += 1
+                            if idx_moves>=len(moves):
+                                move = Node(b).random_search()  # random move if he can't find anything     # TODO: can do better
+                                (from_x, from_y), (to_x, to_y) = move
+                            else :
+                                move = moves[idx_moves][0]
+                                from_x, from_y = alfnum2tuple(move[0])
+                                to_x, to_y = alfnum2tuple(move[1])
+                                
+                        n += 1
+                        
                 # Translate the move
-                _from = tuple2alfanum(_from)
-                _to = tuple2alfanum(_to)
-                move = (_from, _to, color) 
-                if VERBOSE : print(f"Move: {move}")
+                _from = tuple2alfanum((from_x, from_y))
+                _to = tuple2alfanum((to_x, to_y))
+                move = (_from, _to, color)
+                 
+                if VERBOSE : 
+                    print(f"Move: {move}")
+                    print(f"{b.board[from_x][from_y]} ({from_x,from_y}) --> {b.board[to_x][to_y]}({to_x,to_y})")
                 
                 ## 3) Send the move
                 s.send_move(move)
