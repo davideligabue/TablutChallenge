@@ -1,0 +1,17 @@
+https://ieeexplore.ieee.org/document/8971591
+
+@INPROCEEDINGS{8971591,
+  author={Singhal, Shubhendra Pal and Sridevi, M.},
+  booktitle={2019 IEEE 9th International Conference on Advanced Computing (IACC)}, 
+  title={Comparative study of performance of parallel alpha Beta Pruning for different architectures}, 
+  year={2019},
+  volume={},
+  number={},
+  pages={115-119},
+  keywords={Parallel algorithms;Minimax;Alpha Beta pruning;CUDA;OpenMP;Mesh architecture;Shared memory model},
+  doi={10.1109/IACC48062.2019.8971591}
+}
+
+##########################################################################################################################################
+
+...

@@ -15,12 +15,8 @@ VERBOSE = True      # quickly enable/disable verbose
 TYPE = "machine-learning"
 # TYPE = "genetic-algorithm"
 
-# SEARCH_TYPE = "random"                          
-SEARCH_TYPE = "breadth-first"                     
-# SEARCH_TYPE = "depth-first"                     
-# SEARCH_TYPE = "greedy"                          
-# SEARCH_TYPE = "A*"                              
-# SEARCH_TYPE = "A*_alpha_beta_cut"               
+# SEARCH_TYPE = "random"                                                   
+SEARCH_TYPE = "alpha_beta_cut"               
 
 def main():
     
@@ -100,21 +96,9 @@ def main():
                         match SEARCH_TYPE:
                             case "random" : 
                                 _from, _to = n.random_search()
-                            case "breadth-first" : 
-                                _from, _to = n.breadth_first_search(timeout)
-                            case "depth-first" : 
-                                _from, _to = n.depth_first_search(timeout)
-                            case "greedy" : 
-                                _from, _to = n.greedy_best_first_search(timeout)
-                            case "A*" : 
-                                _from, _to = n.a_star_search(timeout)
-                            case "A*_alpha_beta_cut" : 
-                                num_opponent_pred = 2
-                                _from, _to = n.a_star_with_opponent_prediction(
-                                                depth=num_opponent_pred, 
-                                                timeout=timeout - num_opponent_pred  # giving less time because time will get 
-                                                                                    # lost in current-opponent steps
-                                            )
+                            case "alpha_beta_cut" : 
+                                _, ((from_x, from_y), (to_x, to_y)) = n.minimax_alpha_beta(depth=2)
+                                print((from_x, from_y), (to_x, to_y))
                             case _ :
                                 raise Exception("Search strategy not implemented yet")
                     case "genetic-algorithm" :

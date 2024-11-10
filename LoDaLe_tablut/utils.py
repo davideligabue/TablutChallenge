@@ -12,16 +12,9 @@ def check_ip(ip):
     except ValueError:
         return False
     
-# def check_timeout(target_time):
-#     '''
-#     Checks if the timeout is terminated or not
-    
-#     NB: Assume target_time = time.time() + timeout(s)
-#     '''
-#     diff = target_time - time.time()
-#     if (diff <= 0) :
-#         raise Exception(f"Timeout expired: {diff:4f}s")
-#     return diff + time.time()
+def check_timeout(start_time, timeout):
+    if time.time() - start_time > timeout:
+                raise TimeoutError("Timeout reached")
 
 # def pretty_print(board):
 #     # Board dimension
@@ -51,7 +44,6 @@ def tuple2alfanum(tuple_pos):
 
 def alfnum2tuple(alfnum_pos):
     col_alfnum, row_alfnum = tuple(alfnum_pos)
-    print(col_alfnum, row_alfnum)
     col_tuple = ord(col_alfnum) - ord('a')
     row_tuple = int(row_alfnum) - 1
     return (row_tuple, col_tuple)

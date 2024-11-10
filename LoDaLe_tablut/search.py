@@ -3,6 +3,8 @@ from board import Board
 import random
 from utils import *
 from collections import deque
+from heuristics import black_heuristics, white_heuristics, grey_heuristic
+import math
 
 VERBOSE = True
 
@@ -79,41 +81,6 @@ class Node:
             n.sibilings = self.children.copy().remove(n)
             
         return self.children.copy() 
-            
-    def predict_opponent(self, node: 'Node', depth: int, remaining_time: float, start_time: float) -> Optional['Node']:
-        """
-        Simulates the opponent's best move using minimax with depth-limited search.
-        Handles timeout by returning the best move found so far.
-        """
-        if remaining_time <= 0 or depth == 0 or node.state.is_goal_state():
-            return node  # No further prediction or goal state reached
-
-        opponent_best_move = None
-        if node.state.turn == "OPPONENT":
-            # Simulate opponent trying to minimize our score (minimization)
-            min_value = float('inf')
-            for child in node.get_children():
-                # Check for timeout
-                if time.time() - start_time > remaining_time:
-                    return opponent_best_move
-                predicted_move = self.predict_opponent(child, depth - 1, remaining_time - (time.time() - start_time), start_time)
-                if predicted_move and predicted_move.h < min_value:
-                    min_value = predicted_move.h
-                    opponent_best_move = predicted_move
-        else:
-            # Our turn, try to maximize score (maximization)
-            max_value = float('-inf')
-            for child in node.get_children():
-                # Check for timeout
-                if time.time() - start_time > remaining_time:
-                    return opponent_best_move
-                predicted_move = self.predict_opponent(child, depth - 1, remaining_time - (time.time() - start_time), start_time)
-                if predicted_move and predicted_move.h > max_value:
-                    max_value = predicted_move.h
-                    opponent_best_move = predicted_move
-
-        return opponent_best_move
-
     
     ##############################################################################################################################################################
     # SEARCH ALGORITHMS ##########################################################################################################################################
@@ -124,190 +91,41 @@ class Node:
         nodes = self.get_children()
         return random.choice(nodes).move
     
-    def depth_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        '''Depth-First Search (DFS) from the given node'''
-        stack = [self]
-        visited = set()
-        start_time = time.time()  # Record the start time
-        best_node = None  # Track the best node encountered
+    
+    def minimax_alpha_beta(
+            self, 
+            depth: int, 
+            alpha: float = -float('inf'), 
+            beta: float = float('inf')
+        ) -> Tuple[int, Optional[Tuple[Tuple[int, int], Tuple[int, int]]]]:
 
-        while stack:
-            # Check if the timeout has been exceeded
-            if time.time() - start_time > timeout:
-                if VERBOSE : 
-                    print("Timeout exceeded during depth-first search")
-                    print(best_node.move)
-                return best_node.move if best_node else None
+    
+        maximizing_player = (self.state.turn == "WHITE")
+        best_move = None  
 
-            current_node = stack.pop()
-            if current_node.state in visited:
-                continue
-            visited.add(current_node.state)
-
-            # Check if this is the best node (goal state) encountered so far
-            if current_node.state.is_goal_state():  # Assuming the method exists to check for a goal state
-                return current_node.move
-
-            # Update the best node as we explore
-            if best_node is None or current_node.h < best_node.h:
-                best_node = current_node
-
-            # Expand the current node and add its children to the stack
-            for child in current_node.get_children():
-                stack.append(child)
-
-        # Return the best node move if no goal was found within the time
-        return best_node.move if best_node else None
-
-    def breadth_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        '''Breadth-First Search (BFS) from the given node'''
-        queue = deque([self])
-        visited = set()
-        start_time = time.time()  # Record the start time
-        best_node = None  # Track the best node encountered
-
-        while queue:
-            # Check if the timeout has been exceeded
-            if time.time() - start_time > timeout:
-                if VERBOSE : 
-                    print("Timeout exceeded during breadth-first search")
-                    print(best_node.move)
-                return best_node.move if best_node else None
-
-            current_node = queue.popleft()
-            if current_node.state in visited:
-                continue
-            visited.add(current_node.state)
-
-            # Check if this is the best node (goal state) encountered so far
-            if current_node.state.is_goal_state():  # Assuming the method exists to check for a goal state
-                return current_node.move
-
-            # Update the best node as we explore
-            if best_node is None or current_node.h < best_node.h:
-                best_node = current_node
-
-            # Expand the current node and add its children to the queue
-            for child in current_node.get_children():
-                queue.append(child)
-
-        # Return the best node move if no goal was found within the time
-        return best_node.move if best_node else None
-
-    def greedy_best_first_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        '''Greedy Best-First Search from the given node'''
-        start_time = time.time()
-        priority_queue = [self]  # Min-heap based on heuristic value h(n)
-        visited = set()
-        best_node = None  # Keep track of the best node found so far
-
-        while priority_queue:
-            if time.time() - start_time > timeout:
-                if VERBOSE:
-                    print("Timeout exceeded during Greedy Best-First Search")
-                return best_node.move if best_node else None
-
-            current_node = min(priority_queue, key=lambda n: n.h)
-            priority_queue.remove(current_node)
-            
-            if current_node.state in visited:
-                continue
-            visited.add(current_node.state)
-
-            # Update the best node found so far
-            if best_node is None or current_node.h < best_node.h:
-                best_node = current_node
-
-            # Check if we've reached the goal
-            if current_node.state.is_goal_state():
-                return current_node.move
-
-            # Expand children and add them to the priority queue
-            for child in current_node.get_children():
-                if child.state not in visited:
-                    priority_queue.append(child)
-
-        return best_node.move if best_node else None
-
-    def a_star_search(self, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        '''A* search from the given node'''
-        start_time = time.time()
-        priority_queue = [self]  # Min-heap based on f(n) = g(n) + h(n)
-        visited = set()
-        best_node = None  # Keep track of the best node found so far
-
-        while priority_queue:
-            if time.time() - start_time > timeout:
-                if VERBOSE:
-                    print("Timeout exceeded during A* search")
-                return best_node.move if best_node else None
-
-            current_node = min(priority_queue, key=lambda n: n.g + n.h)
-            priority_queue.remove(current_node)
-
-            if current_node.state in visited:
-                continue
-            visited.add(current_node.state)
-
-            # Update the best node found so far
-            if best_node is None or (current_node.g + current_node.h) < (best_node.g + best_node.h):
-                best_node = current_node
-
-            # Check if we've reached the goal
-            if current_node.state.is_goal_state():
-                return current_node.move
-
-            # Expand children and add them to the priority queue
-            for child in current_node.get_children():
-                if child.state not in visited:
-                    child.g = current_node.g + 1  # Increment the path cost
-                    priority_queue.append(child)
-
-        return best_node.move if best_node else None
-
-    def a_star_with_opponent_prediction(self, depth: int, timeout: float) -> Optional[Tuple[Tuple[int, int], Tuple[int, int]]]:
-        """
-        A* search with opponent move prediction.
-        The algorithm predicts the opponent's best responses up to `depth` moves.
-        Handles timeout by returning the best move found so far.
-        """
-        start_time = time.time()
-        priority_queue = [self]  # Min-heap based on f(n) = g(n) + h(n)
-        visited = set()
-        best_node = None  # Keep track of the best node found so far
-
-        while priority_queue:
-            # Check for timeout
-            if time.time() - start_time > timeout:
-                if VERBOSE:
-                    print("Timeout exceeded during A* search with opponent prediction")
-                return best_node.move if best_node else None
-
-            # Get the current node with the lowest f(n)
-            current_node = min(priority_queue, key=lambda n: n.g + n.h)
-            priority_queue.remove(current_node)
-
-            if current_node.state in visited:
-                continue
-            visited.add(current_node.state)
-
-            # Update the best node found so far
-            if best_node is None or (current_node.g + current_node.h) < (best_node.g + best_node.h):
-                best_node = current_node
-
-            # Check if we've reached the goal
-            if current_node.state.is_goal_state():
-                return current_node.move
-
-            # Expand children (our moves) and consider opponent's response
-            for child in current_node.get_children():
-                if child.state not in visited:
-                    child.g = current_node.g + 1  # Increment the path cost
-                    # Predict opponent's response for the given depth
-                    opponent_move = self.predict_opponent(child, depth, timeout - (time.time() - start_time), start_time)
-                    if opponent_move:
-                        priority_queue.append(opponent_move)
-                    else:
-                        priority_queue.append(child)
-
-        return best_node.move if best_node else None
+        # If the node is at the maximum depth or is a leaf
+        if depth == 0 or not self.get_children():
+            return grey_heuristic(self.state), None
+        
+        if maximizing_player:
+            max_eval = -float('inf')
+            for child in self.get_children():
+                eval, _ = child.minimax_alpha_beta(depth - 1, alpha, beta)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_move = child.move  # Update best move
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break  # Beta Cutoff
+            return max_eval, best_move
+        else:
+            min_eval = float('inf')
+            for child in self.get_children():
+                eval, _ = child.minimax_alpha_beta(depth - 1, alpha, beta)
+                if eval < min_eval:
+                    min_eval = eval
+                    best_move = child.move  # Update best move
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break  # Alpha Cutoff
+            return min_eval, best_move
