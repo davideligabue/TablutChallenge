@@ -114,8 +114,10 @@ def grey_heuristic(state: Board) -> int:
         
         # The king must consider free routes that don't lead to victory only if 
         # there are not free routes to escapes
+        # NOTE: dobbiamo mettere che altrimenti il peso è negativo perchè altrimenti lo score 
+        # resterebbe più o meno uguale e dobbiamo rimarcare che sia una brutta idea
         'free_routes_score': W3 * free_routes   if free_routes_to_escapes==0 
-                                                else 0,
+                                                else - W3 * free_routes,
 
         # The king should consider how well he is protected only if he is not in a winning 
         # position, so if he is not that much surrounded by blacks and he is next to an escape
@@ -159,7 +161,13 @@ def grey_heuristic(state: Board) -> int:
         # NOTE: servono pesi molto molto alti
         'double_covered_escapes_score':
             - W10 * num_double_covered_escapes  if free_routes_to_escapes == 0 
-                                                else 0
+                                                else 0,
+        
+        # The player must consider the numerical advantage only if he is not in 
+        # a winning position                    
+        'numerical_advantage' : 
+            W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0 
+                                            else 0
     }
 
     return sum(scorings.values())
