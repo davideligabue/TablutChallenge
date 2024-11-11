@@ -3,7 +3,7 @@ from board import Board
 import random
 from utils import *
 from collections import deque
-from heuristics import black_heuristics, white_heuristics, grey_heuristic
+from heuristics import grey_heuristic
 import math
 
 VERBOSE = True

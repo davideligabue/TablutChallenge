@@ -4,7 +4,7 @@ from socket_manager import SocketManager
 from board import Board
 from utils import *
 from search import Node
-from heuristics import black_heuristics, white_heuristics
+from heuristics import grey_heuristic
 import numpy as np
 
 PORT = {"WHITE":5800, "BLACK":5801}
