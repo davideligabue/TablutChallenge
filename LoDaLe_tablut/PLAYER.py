@@ -98,7 +98,6 @@ def main():
                                 _from, _to = n.random_search()
                             case "alpha_beta_cut" : 
                                 _, ((from_x, from_y), (to_x, to_y)) = n.minimax_alpha_beta(depth=2)
-                                print((from_x, from_y), (to_x, to_y))
                             case _ :
                                 raise Exception("Search strategy not implemented yet")
                     case "genetic-algorithm" :

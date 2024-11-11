@@ -132,21 +132,54 @@ def grey_heuristic(state: Board) -> int:
                 surrounding_threats += 1
             if adj_piece == 'WHITE':
                 white_protection += 1
-        
+
+    # Checking if a black can go near the king the next move
+    possible_checkers = 0
+    check_pos_x, check_pos_y = king_x, king_y
+    for dx, dy in directions:
+        while state.is_within_bounds(check_pos_x, check_pos_y):
+            check_pos_x += dx
+            check_pos_y += dy
+            if state.board[check_pos_x][check_pos_y] == 'BLACK':
+                possible_checkers += 1
+                break
+            elif state.board[check_pos_x][check_pos_y] != 'EMPTY':
+                break
+
     # 7. The black must tend to have a rombus disposition
     rombus_pos = [ 
                 (1,2),       (1,6),
-        (2,1),                   (2,7),
+        (2,1),                      (2,7),
 
-        (6,1),                   (6,7),
+        (6,1),                      (6,7),
                 (7,2),       (7,6)
     ]
+    # Count the number of escape which are closed by a black
+    escape_covered = [
+        (1,1),(1,2),        (1,6),(1,7),
+        (2,1),                    (2,7),
+
+        (6,1),                    (6,7),
+        (7,1),(7,2),        (7,6),(7,7)
+    ]
+    # In the corner one black cover two escapes
+    double_covered_escape = [
+        (1,1),          (1,7),
+
+        (7,1),          (7,7)
+    ]
     num_rombus_pos = 0
+    num_covered_escapes = 0
+    num_double_covered_escapes = 0
     for i in range(9):
         for j in range(9):
             if state.board[i][j] == 'BLACK' and ((i,j) in rombus_pos):
                 num_rombus_pos += 1
-                
+            if state.board[i][j] == 'BLACK' and ((i,j) in escape_covered):
+                num_covered_escapes += 1
+            if state.board[i][j] == 'BLACK' and ((i,j) in double_covered_escape):
+                num_double_covered_escapes += 1
+        
     # 8. 
     
     # Compute scorings (DECIDE THE WEIGHTS also using non linear functions)
