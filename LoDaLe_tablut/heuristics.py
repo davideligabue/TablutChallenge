@@ -133,15 +133,30 @@ def grey_heuristic(state: Board) -> int:
             if adj_piece == 'WHITE':
                 white_protection += 1
         
-    # 7. ...
+    # 7. The black must tend to have a rombus disposition
+    rombus_pos = [ 
+                (1,2),       (1,6),
+        (2,1),                   (2,7),
+
+        (6,1),                   (6,7),
+                (7,2),       (7,6)
+    ]
+    num_rombus_pos = 0
+    for i in range(9):
+        for j in range(9):
+            if state.board[i][j] == 'BLACK' and ((i,j) in rombus_pos):
+                num_rombus_pos += 1
+                
+    # 8. 
     
-    # Compute scorings (DECIDE THE WEIGHTS)
-    W1, W2, W3, W4 = 1, 1, 1, 1     # NOTE: just for testing
+    # Compute scorings (DECIDE THE WEIGHTS also using non linear functions)
+    W1, W2, W3, W4, W5 = 1, 1, 1, 1, 1     # NOTE: just for testing
     scorings = {
         'escape_score ' : W1 * (math.sqrt(50) - min_escape_dist), 
         'protection_score ' : W2 * white_protection, 
         'threat_score ' : - W3 * surrounding_threats, 
-        'open_escape_bonus ' : W4 * free_routes 
+        'open_escape_bonus ' : W4 * free_routes,
+        'num_rombus_pos' : - W5 * num_rombus_pos
     }
     
     return sum(scorings.values())
