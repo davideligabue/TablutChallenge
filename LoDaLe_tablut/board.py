@@ -94,7 +94,7 @@ class Move:
             raise Exception("'Move' class detected non valid piece")
             exit()
         
-    def is_within_bounds(pos):
+    def is_within_bounds(self, pos):
         return 0 <= pos[0] < 9 and 0 <= pos[1] < 9
     
     def is_orthogonal(self):
@@ -108,11 +108,11 @@ class Board:
         self.king = CASTLE   
     
     # controlla se la data posizione è interna alla griglia  ?? da togliere perchè aggiunto come metodo statico di classe Move
-    def is_within_bounds(pos):
+    def is_within_bounds(self, pos):
         return 0 <= pos[0] < 9 and 0 <= pos[1] < 9
 
     # controlla se due pezzi sono di fazione diversa
-    def is_opponent_piece(piece_one, piece_two):
+    def is_opponent_piece(self, piece_one, piece_two):
         if (piece_one == WHITE and piece_two == KING) or (piece_one == KING and piece_two == WHITE):
             return False
         if piece_one != piece_two:
@@ -120,7 +120,7 @@ class Board:
         return False
 
     # controlla se una casella è speciale ?? non capisco perchè dovrebbe interessare se è speciale senza distinguere castle o camps
-    def is_special_tile(pos):
+    def is_special_tile(self, pos):
         # Castle and camp positions are pre-defined (as constants or in the board setup)
         if (pos[0], pos[1]) == CASTLE["all"]:
             return True
@@ -171,14 +171,14 @@ class Board:
         # the resulting object is composed by the cells of the content of cells starting from top left corner (not included) going in 
         # clockwise direction (until it includes the top left corner)
         for i in range(4):
-            i = i%4
-            occupation_obj = self.segment_occupation(corners[i], corners[i+1])
+            i = i%3
+            occupation_obj = self.segment_occupation(corners[i%4], corners[(i+1)%4])
             str_result += occupation_obj["str"]
             cell_result.append( occupation_obj["cells"] )
         return {"str": str_result, "cells": cell_result}
     
     # check whether pos1 and pos2 positions are adjacent on the grid (they have a common side)
-    def is_adjacent(pos1, pos2):
+    def is_adjacent(self, pos1, pos2):
         delta = (pos1[0]-pos2[0], pos1[1]-pos2[1])
         return (delta[0] == 0 and abs(delta[1]) == 1) or (delta[1] == 0 and abs(delta[0]) == 1)
 

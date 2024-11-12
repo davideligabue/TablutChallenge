@@ -62,6 +62,7 @@ def find_all(original:str, tofind:str) -> list():
     for i in range(len(original)):
         if original[i] == tofind:
             result.append(i)
+    return result
 
 def get_n_most_winning_move(dataset, results, n, color):
 
