@@ -1,5 +1,6 @@
 import math
 from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
+from utils import cells_on_line
 
 def grey_heuristic(state: Board) -> int:
     ''' 
@@ -38,14 +39,13 @@ def grey_heuristic(state: Board) -> int:
                     num_covered_escapes += 1
                 if ((i,j) in DOUBLE_ESCAPE_COVER):
                     num_double_covered_escapes += 1
-            elif piece == 'WHITE':
+            elif (piece == 'WHITE') or (piece == 'KING'):
                 num_whites += 1
                 if piece == 'KING':
                     king_pos = (king_x, king_y) = i, j
                     if king_pos in ESCAPES:  #If the king is in an escape ==> white won
                         return float('inf') 
     ####################################################################################
-    
     
     
     # If the king got captured ==> white lost
@@ -72,12 +72,13 @@ def grey_heuristic(state: Board) -> int:
         # First + following layers check
         while state.is_within_bounds(adj_x, adj_y):
             adj_x, adj_y = adj_x + dx, adj_y + dy
-            if state.board[adj_x][adj_y] == 'BLACK' or state.is_special_tile(adj_x, adj_y):
-                possible_threats += 1
-                break   # Already found an obstacle in this direction, try a new one
-            if state.board[adj_x][adj_y] == 'WHITE':
-                possible_protection += 1
-                break   # Already found an obstacle in this direction, try a new one
+            if state.is_within_bounds(adj_x, adj_y):
+                if state.board[adj_x][adj_y] == 'BLACK' or state.is_special_tile(adj_x, adj_y):
+                    possible_threats += 1
+                    break   # Already found an obstacle in this direction, try a new one
+                if state.board[adj_x][adj_y] == 'WHITE':
+                    possible_protection += 1
+                    break   # Already found an obstacle in this direction, try a new one
             
         if (adj_x - dx, adj_y - dy) in ESCAPES :
             free_routes_to_escapes += 1
@@ -89,14 +90,39 @@ def grey_heuristic(state: Board) -> int:
     
     
     
-    min_escape_dist = math.sqrt(min([abs(king_x - ex) + abs(king_y - ey) for ex, ey in ESCAPES]))
+    def get_min_escape_dist():
+        min_dist = min([abs(king_x - ex) + abs(king_y - ey) for ex, ey in ESCAPES])
+        c = 0
+        ex_min, ey_min = None, None
+        for ex, ey in ESCAPES:
+            if abs(king_x - ex) + abs(king_y - ey) == min_dist:
+                c += 1
+                ex_min, ey_min = ex, ey
+        if c==1 :
+            cells_among_king_escape_min = [state.board[x][y] for x,y in cells_on_line(king_x, king_y, ex, ey)]
+            if "BLACK" not in cells_among_king_escape_min:
+                return math.sqrt(min_dist)
+            else: 
+                return math.sqrt(50)  # we don't consider the distance if there are blacks in the middle  (the difference will be 0)
+        else :
+            return math.sqrt(50)      # we don't consider the distance if it is equidistant from 2 points (the difference will be 0)
     
     
     
     ### Compute scorings (DECIDE THE WEIGHTS also using non linear functions) #####################################
     
     # Use weight to optimize the module of the score
-    W1, W2, W3, W4, W5, W6, W7, W8, W9, W10, W11 = 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1  
+    W1 = 5
+    W2 = 1000
+    W3 = 50
+    W4 = 20
+    W5 = 20
+    W6 = 10
+    W7 = 10
+    W8 = 50
+    W9 = 100
+    W10 = 200
+    W11 = 15
     
     # Use a dict for better usability and debug
     scorings = { 
@@ -104,8 +130,8 @@ def grey_heuristic(state: Board) -> int:
         # The king should consider the nearest escape only if it is not surrounded by blacks 
         # in that direction (???)
         'nearest_escape_distance_score':
-            W1 * (math.sqrt(50) - min_escape_dist)  if ... 
-                                                    else 0, 
+            W1 * (math.sqrt(50) - get_min_escape_dist())    if free_routes_to_escapes==0
+                                                            else 0, 
 
         # The king must always consider options where he can win in one move 
         # NOTE: forse potremmo usare direttamente +infinito ma così magari eviteremmo 
@@ -116,8 +142,9 @@ def grey_heuristic(state: Board) -> int:
         # there are not free routes to escapes
         # NOTE: dobbiamo mettere che altrimenti il peso è negativo perchè altrimenti lo score 
         # resterebbe più o meno uguale e dobbiamo rimarcare che sia una brutta idea
-        'free_routes_score': W3 * free_routes   if free_routes_to_escapes==0 
-                                                else - W3 * free_routes,
+        'free_routes_score': 
+            W3 * free_routes    if free_routes_to_escapes==0 
+                                else - W3 * free_routes,
 
         # The king should consider how well he is protected only if he is not in a winning 
         # position, so if he is not that much surrounded by blacks and he is next to an escape
@@ -169,5 +196,4 @@ def grey_heuristic(state: Board) -> int:
             W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0 
                                             else 0
     }
-
     return sum(scorings.values())

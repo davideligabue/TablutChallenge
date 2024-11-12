@@ -6,13 +6,14 @@ from utils import *
 from search import Node
 from heuristics import grey_heuristic
 import numpy as np
+import traceback
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
 VERBOSE = True      # quickly enable/disable verbose
 
-# TYPE = "search-algorithm"
-TYPE = "machine-learning"
+TYPE = "search-algorithm"
+# TYPE = "machine-learning"
 # TYPE = "genetic-algorithm"
 
 # SEARCH_TYPE = "random"                                                   
@@ -90,14 +91,13 @@ def main():
                 
                 match TYPE:
                     case "search-algorithm" :
-                        heuristic = white_heuristics if color=="WHITE" else black_heuristics
-                        n = Node(b, h=heuristic)  
+                        n = Node(b)  
                         
                         match SEARCH_TYPE:
                             case "random" : 
                                 _from, _to = n.random_search()
                             case "alpha_beta_cut" : 
-                                _, ((from_x, from_y), (to_x, to_y)) = n.minimax_alpha_beta(depth=2)
+                                _, ((from_x, from_y), (to_x, to_y)) = n.minimax_alpha_beta(depth=3)
                             case _ :
                                 raise Exception("Search strategy not implemented yet")
                     case "genetic-algorithm" :
@@ -158,8 +158,9 @@ def main():
             else:
                 if VERBOSE : print("Waiting for your opponent move...")
 
-    except Exception as e:
-        if VERBOSE : print(f"An error occurred during the game: {e}")
+    except Exception:
+        if VERBOSE : print(f"An error occurred during the game:")
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":
