@@ -1,6 +1,7 @@
 import ipaddress
 import time
 from collections import Counter
+import numpy as np
 
 def check_ip(ip):
     '''
@@ -71,7 +72,11 @@ def get_n_most_winning_move(dataset, results, n, color):
     return most_common_moves
 
 def cells_on_line(x0, y0, x1, y1):
-    """Genera le celle che la linea tra (x0, y0) e (x1, y1) attraversa."""
+    """
+    Returns the cells in the line among (x0, y0) and (x1, y1). 
+    (using Bresenham algorithm) 
+    """
+    
     cells = []
     dx = abs(x1 - x0)
     dy = abs(y1 - y0)
@@ -92,3 +97,16 @@ def cells_on_line(x0, y0, x1, y1):
             y0 += sy
 
     return cells
+
+if __name__ == "__main__":
+    matrix = np.ones((5,5))
+    cells = cells_on_line(
+            x0=0,y0=0,
+            x1=2,y1=4
+        )
+    for i in range(5):
+        for j in range(5):
+            if (i,j) in cells : matrix[i][j] = 0
+        
+    # print(cells_on_line(2,2,0,0))
+    print(matrix)
