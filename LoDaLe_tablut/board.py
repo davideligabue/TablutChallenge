@@ -69,8 +69,6 @@ REPRESENTED AS:
 
 '''
 
-## aggiungi classe 'position' e definisci operazioni? ...
-
 class Move:
     def __init__(self, start:tuple, end:tuple, piece, is_capture = False):
         self.is_capture = is_capture
@@ -84,15 +82,12 @@ class Move:
             self.end = end
         else:
             raise Exception("'Move' class detected non valid x,y position")
-            exit()
         if not self.is_orthogonal():
             raise Exception("'Move' class detected non orthogonal move")
-            exit()
         if piece == WHITE or piece == BLACK or piece == KING:
             self.piece = piece
         else:
             raise Exception("'Move' class detected non valid piece")
-            exit()
         
     def is_within_bounds(self, pos):
         return 0 <= pos[0] < 9 and 0 <= pos[1] < 9
@@ -105,7 +100,13 @@ class Board:
     def __init__(self, state):
         self.turn = state['turn']
         self.board = np.array(state['board'])
-        self.king = CASTLE   
+        king_pos = np.where(self.board == KING)
+        if king_pos[0].size == 0:
+            self.king = None
+        elif king_pos[0].size == 1:
+            self.king = (king_pos[1][0], king_pos[0][0])
+        else:
+            raise Exception("More than one king in the board") 
     
     # controlla se la data posizione è interna alla griglia  ?? da togliere perchè aggiunto come metodo statico di classe Move
     def is_within_bounds(self, pos):
@@ -129,7 +130,10 @@ class Board:
         return False
     
     def get_cell(self, pos):
-        return self.board[pos[0]][pos[1]]
+        if self.is_within_bounds(pos):
+            return self.board[pos[0]][pos[1]]
+        else:
+            raise Exception("Trying to get value from out of bounds cell")
     
     # given a segment of cells identified by starting position pos1 and end position pos2
     # returns a string which gives a summary of the content of each cell ordered from pos1 to pos2
@@ -137,16 +141,18 @@ class Board:
     def segment_occupation(self, pos1, pos2) -> dict:
         str_result = ""
         cells_result = []
-        delta = (pos1[0]-pos2[0], pos1[1]-pos2[1])
+        delta = (pos2[0]-pos1[0],pos2[1]-pos1[1])
         # when the move is vertical
         if delta[0] == 0:
-            for i in range(1,delta[1]+1):
+            sign = np.sign(delta[1])
+            for i in range( sign, delta[1]+sign, sign ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 str_result += self.get_cell((pos1[0], pos1[1]+i))[0]
                 cells_result.append( (pos1[0], pos1[1]+i) )
         # when the move is orizontal
-        if delta[1] == 0:
-            for i in range(1,delta[0]+1):
+        elif delta[1] == 0:
+            sign = np.sign(delta[0])
+            for i in range( sign, delta[0]+sign, sign ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 str_result += self.get_cell((pos1[0]+i, pos1[1]))[0]
                 cells_result.append( (pos1[0]+i, pos1[1]) )
@@ -160,7 +166,6 @@ class Board:
         cell_result = []
         if radius < 1 or radius > 2:
             raise Exception("In 'ring_occupation' radius must be either 1 or 2")
-            exit()
         # take the corners of the ring around the center (in order: top-left, top-right, bottom-right, bottom-left)
         corners = [(center[0]-radius, center[1]-radius),(center[0]+radius, center[1]-radius),(center[0]+radius, center[1]+radius),(center[0]-radius, center[1]+radius)]
         for corner in corners:
@@ -171,10 +176,10 @@ class Board:
         # the resulting object is composed by the cells of the content of cells starting from top left corner (not included) going in 
         # clockwise direction (until it includes the top left corner)
         for i in range(4):
-            i = i%3
             occupation_obj = self.segment_occupation(corners[i%4], corners[(i+1)%4])
             str_result += occupation_obj["str"]
-            cell_result.append( occupation_obj["cells"] )
+            for cell in occupation_obj["cells"]:
+                cell_result.append( cell )
         return {"str": str_result, "cells": cell_result}
     
     # check whether pos1 and pos2 positions are adjacent on the grid (they have a common side)
@@ -183,8 +188,8 @@ class Board:
         return (delta[0] == 0 and abs(delta[1]) == 1) or (delta[1] == 0 and abs(delta[0]) == 1)
 
     def is_valid_move(self, move:Move):
-        # The starting position must contain the color specified in move
-        if not self.get_cell(move.start) == move.piece:
+        # The starting position must contain the piece specified in move
+        if self.get_cell(move.start) != move.piece:
             return False
        
         # this check shouldn't be needed, all the Moves should altready be through empty spaces
@@ -203,7 +208,7 @@ class Board:
             return False
         
         # if a black piece is outside a camp it cannot re-enter
-        if move.end in CAMPS['all'] and not move.start in CAMPS['all']:
+        if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
             return False
         
         ## ???? non trovo il senso di questo controllo
@@ -254,9 +259,9 @@ class Board:
         surround = self.ring_occupation(move.end, 1) # take the surround of the move end point
         string_indexes = []
         if move.piece == WHITE or move.piece == KING: # if the moved piece is white or king we are interested in black 
-            string_indexes = find_all(surround["str"], "B")
+            string_indexes = find_all(surround["str"], BLACK[0])
         if move.piece == BLACK: # if the moved piece is black we are interested in white
-            string_indexes = find_all(surround["str"], "W")
+            string_indexes = find_all(surround["str"], WHITE[0])
         # for each surrounding adversary
         for elem in string_indexes:
             if elem % 2 == 0:
@@ -274,11 +279,9 @@ class Board:
     def get_all_moves_for_piece(self, pos):
         if not self.is_within_bounds(pos):
             raise Exception("Position not in the grid for 'get_all_moves_for_piece' call")
-            exit()
         piece = self.get_cell(pos)
         if piece == EMPTY:
             raise Exception("Empty piece when calling 'get_all_moves_for_piece'")
-            exit()
         # coordinates of all the cells on the border of the grid moving orthogonally
         borders = [(pos[0], 0), (9, pos[1]), (pos[0], 9), (0, pos[1])]
         segment_occupations = [self.segment_occupation(pos, borders[0]), 
