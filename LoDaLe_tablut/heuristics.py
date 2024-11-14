@@ -99,7 +99,7 @@ def grey_heuristic(state: Board) -> int:
                 c += 1
                 ex_min, ey_min = ex, ey
         if c==1 :
-            cells_among_king_escape_min = [state.board[x][y] for x,y in cells_on_line(king_x, king_y, ex, ey)]
+            cells_among_king_escape_min = [state.board[x][y] for x,y in cells_on_line(king_x, king_y, ex_min, ey_min)]
             if "BLACK" not in cells_among_king_escape_min:
                 return math.sqrt(min_dist)
             else: 
@@ -112,17 +112,17 @@ def grey_heuristic(state: Board) -> int:
     ### Compute scorings (DECIDE THE WEIGHTS also using non linear functions) #####################################
     
     # Use weight to optimize the module of the score
-    W1 = 5
-    W2 = 1000
-    W3 = 50
-    W4 = 20
-    W5 = 20
-    W6 = 10
-    W7 = 10
-    W8 = 50
-    W9 = 100
-    W10 = 200
-    W11 = 15
+    W1 = 3    # Bilancia la distanza dall'escape
+    W2 = 800  # Diminuisce l'enfasi sui percorsi liberi verso l'escape
+    W3 = 40   # Incentiva percorsi liberi solo se l'escape non è immediato
+    W4 = 25   # Migliora la protezione del re
+    W5 = 15   # Diminuire l'effetto negativo delle minacce
+    W6 = 8    # Diminuire l'effetto negativo delle minacce più lontane
+    W7 = 12   # Migliora leggermente la protezione lontana
+    W8 = 30   # Riduce l'enfasi su rombo
+    W9 = 60   # Diminuire l'effetto negativo di escape coperti
+    W10 = 150 # Riduce l'enfasi su doppi escape coperti
+    W11 = 10  # Bilancia il vantaggio numerico
     
     # Use a dict for better usability and debug
     scorings = { 
@@ -196,4 +196,8 @@ def grey_heuristic(state: Board) -> int:
             W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0 
                                             else 0
     }
+    
+    # state.pretty_print()
+    # print(f"State evaluated with score {sum(scorings.values())}")
+    
     return sum(scorings.values())

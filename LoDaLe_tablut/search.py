@@ -96,36 +96,74 @@ class Node:
             self, 
             depth: int, 
             alpha: float = -float('inf'), 
-            beta: float = float('inf')
-        ) -> Tuple[int, Optional[Tuple[Tuple[int, int], Tuple[int, int]]]]:
+            beta: float = float('inf'),
+            nodes_explored: int = 0  # Aggiunto contatore dei nodi esplorati
+        ) -> Tuple[int, Optional[Tuple[Tuple[int, int], Tuple[int, int]]], int]:
 
-    
         maximizing_player = (self.state.turn == "WHITE")
         best_move = None  
 
-        # If the node is at the maximum depth or is a leaf
+        # Se siamo alla profondità massima o in un nodo foglia
         if depth == 0 or not self.get_children():
-            return grey_heuristic(self.state), None
+            return grey_heuristic(self.state), None, nodes_explored + 1  # Aumenta il contatore
+
+         ## START DEBUG ################################# : conta figli duplicati ed eliminali
+        children = self.get_children()
+        unique_children = children.copy()
         
+        counter = {}
+        for i in range(len(children)):
+            c = children[i]
+            try:
+                counter[str(c.state.board)] += 1
+            except : 
+                counter[str(c.state.board)] = 1
+                # c.state.pretty_print()
+            if counter[str(c.state.board)] > 1:
+                unique_children.remove(c)
+                
+        # print(counter.values())
+        # print(len(counter.values()))
+        
+        counter = {}
+        for i in range(len(unique_children)):
+            c = unique_children[i]
+            try:
+                counter[str(c.state.board)] += 1
+            except : 
+                counter[str(c.state.board)] = 1
+                # c.state.pretty_print()
+                
+        print(counter.values())
+        print(len(counter.values()))
+        
+        ## END DEBUG ###################################
+
         if maximizing_player:
             max_eval = -float('inf')
+            
             for child in self.get_children():
-                eval, _ = child.minimax_alpha_beta(depth - 1, alpha, beta)
+                
+                                
+                eval, _, child_nodes = child.minimax_alpha_beta(depth - 1, alpha, beta, nodes_explored)
+                nodes_explored += child_nodes  # Aggiungi i nodi esplorati nel sottoalbero
                 if eval > max_eval:
                     max_eval = eval
-                    best_move = child.move  # Update best move
+                    best_move = child.move  # Aggiorna la mossa migliore
                 alpha = max(alpha, eval)
                 if beta <= alpha:
                     break  # Beta Cutoff
-            return max_eval, best_move
+            return max_eval, best_move, nodes_explored
         else:
             min_eval = float('inf')
             for child in self.get_children():
-                eval, _ = child.minimax_alpha_beta(depth - 1, alpha, beta)
+                eval, _, child_nodes = child.minimax_alpha_beta(depth - 1, alpha, beta, nodes_explored)
+                nodes_explored += child_nodes  # Aggiungi i nodi esplorati nel sottoalbero
                 if eval < min_eval:
                     min_eval = eval
-                    best_move = child.move  # Update best move
+                    best_move = child.move  # Aggiorna la mossa migliore
                 beta = min(beta, eval)
                 if beta <= alpha:
                     break  # Alpha Cutoff
-            return min_eval, best_move
+            return min_eval, best_move, nodes_explored
+
