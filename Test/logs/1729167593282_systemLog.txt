@@ -1,0 +1,34 @@
+ott 17, 2024 2:19:53 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Accensione server
+ott 17, 2024 2:19:53 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Partita di Tablut
+ott 17, 2024 2:19:53 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Waiting for white connection..
+ott 17, 2024 2:19:54 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: White player connected
+ott 17, 2024 2:19:54 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Lettura nome player bianco in corso..
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: White player name:	LoDaLe
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Waiting for Black connection..
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Accettata connessione con client giocatore Nero
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Lettura nome player nero in corso..
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Black player name:	LoDaLe
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Invio messaggio ai giocatori
+ott 17, 2024 2:19:55 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Lettura mossa player W in corso..
+ott 17, 2024 2:20:30 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Move received.	Turn: W Pawn from d5 to d7
+ott 17, 2024 2:20:30 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Invio messaggio ai client
+ott 17, 2024 2:20:30 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Lettura mossa player B in corso..
+ott 17, 2024 2:21:06 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+BUONO: Move received.	Turn: B Pawn from null to null
+ott 17, 2024 2:21:06 PM it.unibo.ai.didattica.competition.tablut.server.Server run
+AVVERTENZA: Chiusura sistema per troppi errori giocatore nero
