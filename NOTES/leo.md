@@ -20,7 +20,22 @@
 11. Classe timer semplice con label per misurare performance dei metodi singoli (così da vedere quali tradurre in c++)
 
 
-
+## Todo
+- incapsula in get all moves l'apply ed il reverse
+- aggiungi get_king
+- metodi get_all_blacks get_all_whites get_king
+- metodo segment se metti +inf va fino all bound
+- metodo per 'evidenziare' celle libere verso camps (partire dai camps)
 
 ## Cose modificate:
 - Aggiunta la classe Move: rappresenta una mossa, con una posizione iniziale e una finale e il colore del pezzo mosso. Il costrutture della classe svolge controlli solo sulla correttezza formale della mossa in sè, ovvero se è nei limiti della griglia e se è ortogonale, non fa controlli sulla presenza di altri pezzi (questi controlli vengono fatti nella classe Board con il metodo is_valid_move)
+
+## Metodi pubblici:
+- segment_occupation
+- ring_occupation
+- is_adjacent
+- is_caputre_move
+- is_king_escaped
+- is_king_captured
+- get_all_moves
+- apply_moves

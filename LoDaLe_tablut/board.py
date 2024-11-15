@@ -129,7 +129,7 @@ class Board:
             return True
         return False
     
-    def get_cell(self, pos):
+    def get_cell(self, pos): 
         if self.is_within_bounds(pos):
             return self.board[pos[0]][pos[1]]
         else:

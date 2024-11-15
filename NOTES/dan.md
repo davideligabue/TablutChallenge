@@ -3,23 +3,30 @@
 non c'è molto da poter cambiare alle variabili (bisognerebbe studarsi un pò il tablut e poi e poi) che valutano e successivaente classificano diverse posizioni.
 Di seguito quelle attualmente presenti:
     per il bianco:
-        - distanza del re dall'uscita più vicina;
-        - quanto bene il re è protetto da pedine bianche;
-        - quanto il re è in pericolo (quante pedine nere ha intorno);
+        - distanza del re dall'uscita più vicina; | da rivedere?
+        - quanto bene il re è protetto da pedine bianche; | peso medio?
+        - quanto il re è in pericolo (quante pedine nere ha intorno); | peso medio?
     per il nero:
-        - distanza del re dall'uscita più vicina;
-        - quando bene il re è circondato da pedine nere;
-        - quante uscite ('scappatoie', movimenti) libere ha il re. (molto importante secand me)
+        - distanza del re dall'uscita più vicina; | da rivedere?
+        - quando bene il re è circondato da pedine nere; | peso alto
+        - quante uscite ('scappatoie', movimenti) libere ha il re. (molto importante secand me) | peso alto
 
 Si potrebbe aggiungere:
     per il bianco:
-        - potenziali pezzi catturabili;
-        - potenziali pezzi in presa;
-        - liberà di movimento dei propri pezzi;
+        - potenziali pezzi catturabili; | peso medio
+        - potenziali pezzi in presa; | peso basso
+        - liberà di movimento dei propri pezzi; | peso molto basso ?conviene?
+        - più punteggio per arrivare a celle 'evidenziate' | peso medio-alto
+        - cercare di occupare posizioni del rombo | peso medio-alto
+        
+
     per il nero:
         - potenziali pezzi catturabili;
         - potenziali pezzi in presa;
         - liberà di movimento dei propri pezzi;
+        - la formazione di uno dei rombi (varie dimensioni) vale tanto
+
+
 
 Comunque, bianco o nero che sia, in generale le variabili (gli indicatori) sono sempre:
     1. accerchiamento
@@ -67,3 +74,5 @@ oppure all'opposto:
 max-min con alpha-beta cuts, non vedo molte altre alternative.
 
 All chess programs consult the library of openings (there are openings that have been previously fully explored and that can affect the entire game) --> Possiamo creare una piccola libreria che contiene delle aperture così che ad inizio gioco si prova a seguire quelle(?) (chiaramente quelle che ci portano a vincere in più partite). (nota_pelle: può avere senso, si possono considerare le prime N mosse vincenti del dataset)
+
+
