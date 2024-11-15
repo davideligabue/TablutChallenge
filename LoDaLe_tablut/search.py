@@ -125,17 +125,17 @@ class Node:
         # print(counter.values())
         # print(len(counter.values()))
         
-        counter = {}
-        for i in range(len(unique_children)):
-            c = unique_children[i]
-            try:
-                counter[str(c.state.board)] += 1
-            except : 
-                counter[str(c.state.board)] = 1
-                # c.state.pretty_print()
+        # counter = {}
+        # for i in range(len(unique_children)):
+        #     c = unique_children[i]
+        #     try:
+        #         counter[str(c.state.board)] += 1
+        #     except : 
+        #         counter[str(c.state.board)] = 1
+        #         # c.state.pretty_print()
                 
-        print(counter.values())
-        print(len(counter.values()))
+        # print(counter.values())
+        # print(len(counter.values()))
         
         ## END DEBUG ###################################
 
@@ -143,8 +143,6 @@ class Node:
             max_eval = -float('inf')
             
             for child in self.get_children():
-                
-                                
                 eval, _, child_nodes = child.minimax_alpha_beta(depth - 1, alpha, beta, nodes_explored)
                 nodes_explored += child_nodes  # Aggiungi i nodi esplorati nel sottoalbero
                 if eval > max_eval:

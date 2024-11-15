@@ -98,7 +98,7 @@ def grey_heuristic(state: Board) -> int:
             if abs(king_x - ex) + abs(king_y - ey) == min_dist:
                 c += 1
                 ex_min, ey_min = ex, ey
-        if c==1 :
+        if c in [1,2] :
             cells_among_king_escape_min = [state.board[x][y] for x,y in cells_on_line(king_x, king_y, ex_min, ey_min)]
             if "BLACK" not in cells_among_king_escape_min:
                 return math.sqrt(min_dist)

@@ -16,8 +16,8 @@ TYPE = "search-algorithm"
 # TYPE = "machine-learning"
 # TYPE = "genetic-algorithm"
 
-# SEARCH_TYPE = "random"                                                   
-SEARCH_TYPE = "alpha_beta_cut"               
+SEARCH_TYPE = "random"                                                   
+# SEARCH_TYPE = "alpha_beta_cut"               
 
 def main():
     
@@ -71,7 +71,8 @@ def main():
             initial_time = time.time()
             
             ## 1) Read current state / state updated by the opponent move
-            current_state = s.get_state()
+            try: current_state = s.get_state()
+            except TypeError: pass # if loses can't read
             b = Board(state=current_state)
             
             # Memorize opponent move
@@ -100,8 +101,6 @@ def main():
                                 case "alpha_beta_cut" : 
                                     score , ((from_x, from_y), (to_x, to_y)), nodes_explored = n.minimax_alpha_beta(depth=1)
                                     print(f"Score = {score}")
-                                    sys.set_int_max_str_digits(0)
-                                    # print(nodes_explored)
                                 case _ :
                                     raise Exception("Search strategy not implemented yet")
                         case "genetic-algorithm" :
