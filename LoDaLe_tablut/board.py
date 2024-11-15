@@ -2,57 +2,27 @@ import numpy as np
 from utils import *
 
 # CONSTANTS
-WHITE_PLAYER = "WHITE"
-BLACK_PLAYER = "BLACK"
+WHITE = "WHITE"
+BLACK = "BLACK"
+KING = "KING"
+EMPTY = "EMPTY"
 CASTLE = (4, 4)
 
-ESCAPES = {   
-        (0,1), (0,2),           (0,6), (1,7),               
-    (1,0),                                   (1,8),
-    (2,0),                                   (2,8),      
-    
-    
-    
-    
-    (6,0),                                   (6,8),
-    (7,0),                                   (7,8),      
-        (8,1), (8,2),           (8,6), (8,7)                
-}
-
 CAMPS = {   
-                (0,3),  (0,4),  (0,5), 
-                        (1,4),    
-                                          
-    (3,0),                                      (3,8), 
-    (4,0),  (4,1),                       (4,7), (4,8),  
-    (5,0),                                      (5,8),   
-                                          
-                        (7,4),      
-                (8,3),  (8,4),  (8,5)
+    "upper" : [(0,3), (0,4), (0,5), (1,4)],     # upper camps
+    "lower" : [(8,3), (8,4), (8,5), (7,4)],     # lower camps
+    "left" : [(3,0), (4,0), (5,0), (4,1)],     # left camps
+    "right" : [(3,8), (4,8), (5,8), (4,7)]      # right camps
 }
+CAMPS["all"] = CAMPS["upper"] + CAMPS["lower"] + CAMPS["left"] + CAMPS["right"]
 
-ROMBUS_POS = { 
-            (1,2),       (1,6),
-    (2,1),                      (2,7),
-
-    (6,1),                      (6,7),
-            (7,2),       (7,6)
+ESCAPES = {   
+    "up-left" : [(0,1), (0,2), (1,0), (2,0)],     # upper-left escapes
+    "low-left" : [(6,0), (7,0), (8,1), (8,2)],     # lower-left escapes
+    "low-right" : [(8,6), (8,7), (6,8), (7,8)],     # lower-right escapes
+    "up-right" : [(0,6), (0,7), (1,8), (2,8)]      # upper-right escapes
 }
-
-ESCAPE_COVER = {
-    (1,1),(1,2),        (1,6),(1,7),
-    (2,1),                    (2,7),
-
-    (6,1),                    (6,7),
-    (7,1),(7,2),        (7,6),(7,7)
-}
-
-DOUBLE_ESCAPE_COVER = {
-    (1,1),          (1,7),
-
-    (7,1),          (7,7)
-}
-
+ESCAPES["all"] = ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"]
 
 '''
 STATE (initial) :
@@ -99,313 +69,284 @@ REPRESENTED AS:
 
 '''
 
+class Move:
+    def __init__(self, start:tuple, end:tuple, piece, is_capture = False):
+        self.is_capture = is_capture
+        if is_capture:
+            self.start = start
+            self.end = self.start
+            self.piece = piece
+            return
+        if self.is_within_bounds(end):
+            self.start = start
+            self.end = end
+        else:
+            raise Exception("'Move' class detected non valid x,y position")
+        if not self.is_orthogonal():
+            raise Exception("'Move' class detected non orthogonal move")
+        if piece == WHITE or piece == BLACK or piece == KING:
+            self.piece = piece
+        else:
+            raise Exception("'Move' class detected non valid piece")
+        
+    def is_within_bounds(self, pos):
+        return 0 <= pos[0] < 9 and 0 <= pos[1] < 9
+    
+    def is_orthogonal(self):
+        return (self.start[0] == self.end[0]) or (self.start[1] == self.end[1])
+
 class Board:
 
     def __init__(self, state):
         self.turn = state['turn']
-        # Board must be np.ndarray
-        self.board = state['board'] \
-                    if type(state['board'])==np.ndarray \
-                    else np.array(state['board'])   
+        self.board = np.array(state['board'])
+        king_pos = np.where(self.board == KING)
+        if king_pos[0].size == 0:
+            self.king = None
+        elif king_pos[0].size == 1:
+            self.king = (king_pos[1][0], king_pos[0][0])
+        else:
+            raise Exception("More than one king in the board") 
     
-    def is_within_bounds(self, x, y):
-        return 0 <= x < 9 and 0 <= y < 9
+    # controlla se la data posizione è interna alla griglia  ?? da togliere perchè aggiunto come metodo statico di classe Move
+    def is_within_bounds(self, pos):
+        return 0 <= pos[0] < 9 and 0 <= pos[1] < 9
 
-    def is_opponent_piece(self, moved_piece, other_piece):
-        if moved_piece == 'WHITE' and other_piece == 'BLACK':
-            return True
-        if moved_piece == 'BLACK' and other_piece == 'WHITE':
-            return True
-        if moved_piece == 'KING' and other_piece == 'BLACK':
+    # controlla se due pezzi sono di fazione diversa
+    def is_opponent_piece(self, piece_one, piece_two):
+        if (piece_one == WHITE and piece_two == KING) or (piece_one == KING and piece_two == WHITE):
+            return False
+        if piece_one != piece_two:
             return True
         return False
 
-    def is_special_tile(self, x, y):
+    # controlla se una casella è speciale ?? non capisco perchè dovrebbe interessare se è speciale senza distinguere castle o camps
+    def is_special_tile(self, pos):
         # Castle and camp positions are pre-defined (as constants or in the board setup)
-        if (x, y) == CASTLE:
+        if (pos[0], pos[1]) == CASTLE["all"]:
             return True
-        if (x, y) in CAMPS:
+        if (pos[0], pos[1]) in CAMPS["all"]:
             return True
         return False
+    
+    def get_cell(self, pos): 
+        if self.is_within_bounds(pos):
+            return self.board[pos[0]][pos[1]]
+        else:
+            raise Exception("Trying to get value from out of bounds cell")
+    
+    # given a segment of cells identified by starting position pos1 and end position pos2
+    # returns a string which gives a summary of the content of each cell ordered from pos1 to pos2
+    # in the segment (starting point not included, end point included), format example: 'bbwee...' there are two blacks, one white and two empty
+    def segment_occupation(self, pos1, pos2) -> dict:
+        str_result = ""
+        cells_result = []
+        delta = (pos2[0]-pos1[0],pos2[1]-pos1[1])
+        # when the move is vertical
+        if delta[0] == 0:
+            sign = np.sign(delta[1])
+            for i in range( sign, delta[1]+sign, sign ):
+                # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
+                str_result += self.get_cell((pos1[0], pos1[1]+i))[0]
+                cells_result.append( (pos1[0], pos1[1]+i) )
+        # when the move is orizontal
+        elif delta[1] == 0:
+            sign = np.sign(delta[0])
+            for i in range( sign, delta[0]+sign, sign ):
+                # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
+                str_result += self.get_cell((pos1[0]+i, pos1[1]))[0]
+                cells_result.append( (pos1[0]+i, pos1[1]) )
+        return {"str":str_result, "cells":cells_result}
+    
+    # given a center in the grid, it returns the Summary Object for the cells in the ring (of radius 1 or 2)
+    # the Summary Object is a dictionary which has under the key "str" the string containing the info about cell occupations,
+    # under the key "cells" the position tuple corresponding to the string letter
+    def ring_occupation(self, center, radius) -> dict:
+        str_result = ""
+        cell_result = []
+        if radius < 1 or radius > 2:
+            raise Exception("In 'ring_occupation' radius must be either 1 or 2")
+        # take the corners of the ring around the center (in order: top-left, top-right, bottom-right, bottom-left)
+        corners = [(center[0]-radius, center[1]-radius),(center[0]+radius, center[1]-radius),(center[0]+radius, center[1]+radius),(center[0]-radius, center[1]+radius)]
+        for corner in corners:
+            # if the corner is outside the grid return None
+            if not self.is_within_bounds(corner):
+                return None
+        # get the summary object for the content of the ring, using the method 'segment_occupation'
+        # the resulting object is composed by the cells of the content of cells starting from top left corner (not included) going in 
+        # clockwise direction (until it includes the top left corner)
+        for i in range(4):
+            occupation_obj = self.segment_occupation(corners[i%4], corners[(i+1)%4])
+            str_result += occupation_obj["str"]
+            for cell in occupation_obj["cells"]:
+                cell_result.append( cell )
+        return {"str": str_result, "cells": cell_result}
+    
+    # check whether pos1 and pos2 positions are adjacent on the grid (they have a common side)
+    def is_adjacent(self, pos1, pos2):
+        delta = (pos1[0]-pos2[0], pos1[1]-pos2[1])
+        return (delta[0] == 0 and abs(delta[1]) == 1) or (delta[1] == 0 and abs(delta[0]) == 1)
 
-    def is_valid_move(self, from_x, from_y, to_x, to_y, piece_type):
+    def is_valid_move(self, move:Move):
+        # The starting position must contain the piece specified in move
+        if self.get_cell(move.start) != move.piece:
+            return False
+       
+        # this check shouldn't be needed, all the Moves should altready be through empty spaces
+        # for the traversed path every cell must be empty
+        #segment_info = self.segment_occupation(move.start, move.end)
+        #for char in segment_info:
+            #if char != EMPTY[0]:
+                #return False
         
-        # Black can't move the king
-        if piece_type=="KING" and self.turn=="BLACK":
+        # only the king can move in the castle
+        if move.end == CASTLE and move.piece != KING:
             return False
         
-        # Can't move opponents pieces
-        if (piece_type=="WHITE" or piece_type=="BLACK") and self.turn!=piece_type:
+        # only the black can move in camps
+        if move.end in CAMPS['all'] and move.piece != BLACK:
             return False
         
-        # Can't move the empty pos
-        if piece_type=="EMPTY":
+        # if a black piece is outside a camp it cannot re-enter
+        if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
             return False
         
-        # Can't move the tower
-        if piece_type=="THRONE":
-            return False
-        
-        # Check if the destination is within board bounds
-        if not self.is_within_bounds(to_x, to_y):
-            return False
-        
-        # Check if the destination is occupied
-        if self.board[to_x][to_y] != 'EMPTY':
-            return False
-        
-        # Check if the move is orthogonal (pieces can only move in straight lines)
-        if from_x != to_x and from_y != to_y:
-            return False
-                
-        # Traverse the path to the destination, ensuring all intermediate cells are empty
-        dx = np.sign(to_x - from_x)  # +1, -1, or 0 ==> orthogonal directions
-        dy = np.sign(to_y - from_y)  # +1, -1, or 0 ==> orthogonal directions
-        current_x, current_y = from_x + dx, from_y + dy
-        while current_x != to_x or current_y != to_y:
-            if self.board[current_x][current_y] != 'EMPTY':
-                return False
-            current_x += dx
-            current_y += dy
-        
-        # Check special conditions for the king and camps
-        if (to_x, to_y) == CASTLE:
-            # Only the king can move into or land on the castle
-            if piece_type != 'KING':
-                return False
-        if (to_x, to_y) in CAMPS:
-            # Only black pieces can land in camps, but once they leave, they cannot re-enter
-            if piece_type == 'WHITE' or piece_type == 'KING':
-                return False
-        
-        # Ensure black pieces cannot return to camps once they have left
-        if (from_x, from_y) not in CAMPS and (to_x, to_y) in CAMPS and piece_type == 'BLACK':
-            return False
-        
+        ## ???? non trovo il senso di questo controllo
+
         # For the king, check if it is moving towards an escape point
-        if piece_type == 'KING' and (to_x, to_y) in ESCAPES:
+        #if piece_type == 'KING' and (to_x, to_y) in ESCAPES:
             # The king can only move to an escape if there is a clear path (no black pieces in the way)
-            if not self.is_escape_clear(to_x, to_y):
-                return False
+            #if not self.is_escape_clear(to_x, to_y):
+                #return False
         
         # If all checks pass, the move is valid
         return True
-
-    def is_goal_state(self):
-        king_pos = None
-
-        # Find the King on the board
-        for i in range(9):
-            for j in range(9):
-                if self.board[i][j] == 'KING':
-                    king_pos = (i, j)
-                    break
-            if king_pos:
-                break
-
-        if not king_pos:
-            # If there's no King on the board, it's an invalid state, or the King has been captured
-            return self.turn == BLACK_PLAYER  # Black wins if the King has been captured
-
-        king_x, king_y = king_pos
-
-        # Check if the King is on an escape point (White victory)
-        if (king_x, king_y) in ESCAPES:
-            return self.turn == WHITE_PLAYER  # White wins if the King reaches an escape point
-
-        # Check if the King is surrounded (Black victory)
-        # Directions for orthogonal checking
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        surrounding_black = 0
-
-        for dx, dy in directions:
-            adj_x, adj_y = king_x + dx, king_y + dy
-
-            if not self.is_within_bounds(adj_x, adj_y):
-                continue
-
-            adj_piece = self.board[adj_x][adj_y]
-
-            # Check if it's either a black piece or a special tile (camp or castle)
-            if adj_piece == 'BLACK' or self.is_special_tile(adj_x, adj_y):
-                surrounding_black += 1
-
-        # The King is captured if surrounded on all four sides
-        if surrounding_black == 4:
-            return self.turn == BLACK_PLAYER  # Black wins if the King is surrounded
-
-        return False  # No player has won yet
-
-    def get_moves_in_direction(self, x, y, dx, dy, piece_type):
-        moves = []
-        new_x, new_y = x + dx, y + dy
-        while self.is_valid_move(x, y, new_x, new_y, piece_type):
-            moves.append((new_x, new_y))
-            new_x += dx
-            new_y += dy
-        return moves
-
-    def is_escape_clear(self, to_x, to_y):
-        # Check if there are no black pieces blocking the escape path for the king
-        if to_x == 0:  # Top escapes
-            for x in range(to_x + 1, 9):
-                if self.board[x][to_y] == 'BLACK':
-                    return False
-        elif to_x == 8:  # Bottom escapes
-            for x in range(0, to_x):
-                if self.board[x][to_y] == 'BLACK':
-                    return False
-        elif to_y == 0:  # Left escapes
-            for y in range(to_y + 1, 9):
-                if self.board[to_x][y] == 'BLACK':
-                    return False
-        elif to_y == 8:  # Right escapes
-            for y in range(0, to_y):
-                if self.board[to_x][y] == 'BLACK':
-                    return False
-        
-        return True
     
-    def get_captures(self, from_x, from_y):
-        captures = []
-        moved_piece = self.board[from_x][from_y]
-        
-        # Directions for orthogonal movement
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        
-        # Check all directions from (from_x, from_y) to see if any move results in a capture
-        for dx, dy in directions:
-            x, y = from_x, from_y
-            
-            # Move along the direction until we hit a block or the edge of the board
-            while True:
-                x += dx
-                y += dy
-                
-                # Stop if we go out of bounds
-                if not self.is_within_bounds(x, y):
-                    break
-                
-                # Stop if we hit a non-empty tile
-                if self.board[x][y] != 'EMPTY':
-                    break
-                
-                # Check if moving to (x, y) results in a capture
-                adj_x, adj_y = x + dx, y + dy  # Adjacent square in the direction we're checking
-                opp_x, opp_y = x + 2*dx, y + 2*dy  # Opposite square beyond the adjacent one
-
-                # Ensure adjacent and opposite squares are within bounds
-                if not (self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y)):
-                    continue
-
-                adj_piece = self.board[adj_x][adj_y]
-                opp_piece = self.board[opp_x][opp_y]
-
-                # Check if the adjacent piece is an opponent's piece and can be captured
-                if self.is_opponent_piece(moved_piece, adj_piece):
-                    if opp_piece == moved_piece or self.is_special_tile(opp_x, opp_y):
-                        captures.append((x, y))  # Add this position as a valid capture move
-
-        return captures if captures else None
-
-    def is_capture(self, from_x, from_y, to_x, to_y):
-        moved_piece = self.board[from_x][from_y]
-
-        # Directions for orthogonal movement
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        
-        # Check in all directions for possible captures
-        for dx, dy in directions:
-            adj_x, adj_y = to_x + dx, to_y + dy  # Adjacent square in the direction of the move
-            opp_x, opp_y = to_x + 2*dx, to_y + 2*dy  # Opposite square beyond the adjacent one
-
-            # Ensure adjacent and opposite squares are within bounds
-            if not (self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y)):
-                continue
-
-            adj_piece = self.board[adj_x][adj_y]
-            opp_piece = self.board[opp_x][opp_y]
-
-            # Check if the adjacent piece is an opponent's piece and can be captured
-            if self.is_opponent_piece(moved_piece, adj_piece):
-                if opp_piece == moved_piece or self.is_special_tile(opp_x, opp_y):
-                    return True  # Capture found
-
-        # Special handling for capturing the king
-        if moved_piece == 'KING':
-            count_black = 0
-            surrounding_tiles = [(to_x + dx, to_y + dy) for dx, dy in directions]
-            for sx, sy in surrounding_tiles:
-                if self.is_within_bounds(sx, sy) and (self.board[sx][sy] == 'BLACK' or self.is_special_tile(sx, sy)):
-                    count_black += 1
-            if count_black == 4:  # King is surrounded on all four sides
-                return True
-        
-        return False
+    def is_king_escaped(self):
+        return self.king in ESCAPES["all"]
     
-    def apply_move(self, from_pos, to_pos):
-        _from_x, _from_y = from_pos
-        _to_x, _to_y = to_pos
-
-        # Controlla se il movimento è valido
-        piece_type = self.board[_from_x][_from_y]
-        if not self.is_valid_move(_from_x, _from_y, _to_x, _to_y, piece_type):
-            raise ValueError("Invalid move")
-
-        # Esegue il movimento
-        self.board[_to_x][_to_y] = piece_type  # Sposta il pezzo nella nuova posizione
-        self.board[_from_x][_from_y] = 'EMPTY'  # Libera la posizione precedente
-
-        # Gestisce la cattura, se presente
-        if self.is_capture(_from_x, _from_y, _to_x, _to_y):
-            self.capture_piece(_from_x, _from_y, _to_x, _to_y)
-
-        # Cambia il turno
-        self.turn = WHITE_PLAYER if self.turn == BLACK_PLAYER else BLACK_PLAYER
-
-    def capture_piece(self, from_x, from_y, to_x, to_y):
-        # Logica per rimuovere il pezzo catturato, se necessario
-        moved_piece = self.board[from_x][from_y]
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        
-        for dx, dy in directions:
-            adj_x, adj_y = to_x + dx, to_y + dy
-            opp_x, opp_y = to_x + 2*dx, to_y + 2*dy
-
-            # Controlla se ci sono pezzi avversari da catturare
-            if self.is_within_bounds(adj_x, adj_y) and self.is_within_bounds(opp_x, opp_y):
-                adj_piece = self.board[adj_x][adj_y]
-                if self.is_opponent_piece(moved_piece, adj_piece):
-                    # Cattura il pezzo avversario
-                    self.board[adj_x][adj_y] = 'EMPTY'  # Rimuovi il pezzo avversario
-
-    def get_all_moves_for_piece(self, x, y):
-        piece_type = self.board[x][y]
-        moves = []
-        if piece_type not in ['WHITE', 'BLACK', 'KING']:
-            return moves
-        
-        # Orthogonal directions (up, down, left, right)
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        for dx, dy in directions:
-            moves.extend(self.get_moves_in_direction(x, y, dx, dy, piece_type))
-
-        return moves
+    def is_king_captured(self):
+        return self.king == None
     
-    def get_all_moves(self):
-        all_moves = []
-        for x in range(9):
-            for y in range(9):
-                piece = self.board[x][y]
-                if self.turn == 'WHITE' and piece in ['WHITE', 'KING']:
-                    piece_moves = self.get_all_moves_for_piece(x, y) 
-                    if piece_moves:  # Only add if there are moves
-                        all_moves.append((x, y, piece_moves))
-                elif self.turn == 'BLACK' and piece == 'BLACK':
-                    piece_moves = self.get_all_moves_for_piece(x, y)
-                    if piece_moves:  # Only add if there are moves
-                        all_moves.append((x, y, piece_moves))
-        return all_moves
+    # returns a tuple (True, pos) if this move brings to the capture of a piece in the 'pos' position
+    # else it returns (False, xx). IT DOESN'T CHECK WHETHER IS A VALID MOVE (you should check before calling this method)
+    def is_a_capture_move(self, move: Move):
+        # if the moving piece is black, check if it is capturing the king
+        if move.piece == BLACK:
+            # if the end position of the move has a king adjacent
+            if self.is_adjacent(move.end, self.king):
+                # check the surrounding of the king in even positions (up, down, left, right)
+                king_surround = self.ring_occupation(CASTLE, 1)
+                black_occupation = find_all(king_surround["str"], BLACK[0])
+                blacks_in_even_position = 0
+                for index in black_occupation:
+                    if index % 2 == 0:
+                        blacks_in_even_position += 1
+                # If the King is in the Castle, it must be already surrounded on 3 sides (the 4th is the end position of this move)
+                if self.king == CASTLE:
+                    return (blacks_in_even_position==3, self.king)
+                # if the king is adjacent to the castle, it must be already surrounded on 2 sides (the 3rd is the end position of this move)
+                if self.is_adjacent(self.king, CASTLE):
+                    return (blacks_in_even_position==2, self.king)
+                # if the end position makes the king between a black piece and a camp, it is a capture
+                # check for every even surrounding cell if the king has on opposite sides the end of this move and a camp
+                for cell in king_surround["cells"]:
+                    if cell in CAMPS["all"]:
+                        delta = (cell[0]-move.end[0], cell[1]-move.end[1])
+                        if (delta[0] == 0 and abs(delta[1]) == 2) or (delta[1] == 0 and abs(delta[0]) == 2):
+                            return (True, self.king)
+        # now all the general rules for all checkers BLACK, WHITE and KING
+        surround = self.ring_occupation(move.end, 1) # take the surround of the move end point
+        string_indexes = []
+        if move.piece == WHITE or move.piece == KING: # if the moved piece is white or king we are interested in black 
+            string_indexes = find_all(surround["str"], BLACK[0])
+        if move.piece == BLACK: # if the moved piece is black we are interested in white
+            string_indexes = find_all(surround["str"], WHITE[0])
+        # for each surrounding adversary
+        for elem in string_indexes:
+            if elem % 2 == 0:
+                # at this point elem is an adjacent adversary 1.1 0.1  1.0
+                delta = (move.end[0] - surround["cells"][elem][0], move.end[1] - surround["cells"][elem][1])
+                opposite_cell_coordinates = (surround["cells"][elem][0] - delta[0], surround["cells"][elem][1] - delta[1])
+                if self.get_cell(opposite_cell_coordinates) == move.piece: # it means that the cell of the adversary is between an ally and your next move, so this move is a capture
+                    return (True, (surround["cells"][elem][0], surround["cells"][elem][1]))
+                # check if the opposite cell is the castle, or a camp. In this case this move is a capture
+                if opposite_cell_coordinates == CASTLE or opposite_cell_coordinates in CAMPS["all"]:
+                    return (True, (surround["cells"][elem][0], surround["cells"][elem][1]))
+        return (False, None)
+        
+    # take a position on the grid and returns the list of all possible legal moves for that piece
+    def get_all_moves_for_piece(self, pos):
+        if not self.is_within_bounds(pos):
+            raise Exception("Position not in the grid for 'get_all_moves_for_piece' call")
+        piece = self.get_cell(pos)
+        if piece == EMPTY:
+            raise Exception("Empty piece when calling 'get_all_moves_for_piece'")
+        # coordinates of all the cells on the border of the grid moving orthogonally
+        borders = [(pos[0], 0), (9, pos[1]), (pos[0], 9), (0, pos[1])]
+        segment_occupations = [self.segment_occupation(pos, borders[0]), 
+                               self.segment_occupation(pos, borders[1]),
+                               self.segment_occupation(pos, borders[2]),
+                               self.segment_occupation(pos, borders[3])]
+        result = []
+        for direction in segment_occupations:
+            for i in range(len(direction["str"])):
+                if direction["str"][i] != EMPTY[0]:
+                    break
+                move = Move(pos, direction["cells"][i], piece)
+                if self.is_valid_move(move):
+                    result.append(move)
+        return result
+    
+    # given a list of Move, it applies them in order (the moves are supposed to be altready legal)
+    def apply_moves(self, moves_list:list):
+        sequence_list = []
+        for move in moves_list:
+            self.board[move.start[0]][move.start[1]] = EMPTY
+            self.board[move.end[0]][move.end[1]] = move.piece
+            if move.piece == KING:
+                self.king = move.end
+            sequence_list.append(move)
+            # check if there is a capture to perform
+            capturing_result = self.is_a_capture_move(move)
+            if capturing_result[0]:
+                captured_piece = self.board[capturing_result[1][0]][capturing_result[1][1]]
+                self.board[capturing_result[1][0]][capturing_result[1][1]] = EMPTY
+                # add the capture action to the sequence list so it can be tracked down and eventually reversed
+                sequence_list.append(Move((capturing_result[1][0], capturing_result[1][1]), 0, captured_piece, True))
+                if captured_piece == KING:
+                    self.king = None
+        return sequence_list
+    
+    # given a list of Move, it applies them in reverse order and from end to start (the moves are supposed to be altready legal)
+    def reverse_moves(self, sequence_list:list,):
+        for move in sequence_list[::-1]:
+            if move.is_capture:
+                self.board[move.start[0]][move.start[1]] = move.piece
+                if move.piece == KING:
+                    self.king = (move.start[0], move.start[1])
+            else:
+                self.board[move.end[0]][move.end[1]] = EMPTY
+                self.board[move.start[0]][move.start[1]] = move.piece
+                if move.piece == KING:
+                    self.king = move.start
+    
+    # returns all the current possible moves in the board, based on the specified color
+    def get_all_moves(self, color):
+        # select the right mask based on color
+        mask = None
+        result = []
+        if color == WHITE:
+            mask = (self.board == WHITE) | (self.board == KING)
+        elif color == BLACK:
+            mask = (self.board == BLACK)
+        positions = np.where(mask)
+        for i in range(len(positions[0])):
+            moves = self.get_all_moves_for_piece((positions[0][i], positions[1][i]))
+            for mv in moves:
+                result.append(mv)
+        return result
+
     
     def pretty_print(self):
         # Board dimension
