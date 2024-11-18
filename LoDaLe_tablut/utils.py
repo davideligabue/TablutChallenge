@@ -13,30 +13,6 @@ def check_ip(ip):
     except ValueError:
         return False
     
-def check_timeout(start_time, timeout):
-    if time.time() - start_time > timeout:
-                raise TimeoutError("Timeout reached")
-
-# def pretty_print(board):
-#     # Board dimension
-#     n = board.shape[0]
-    
-#     # Literal labels (A, B, C, ...)
-#     column_labels = '    ' + '   '.join([chr(i + ord('A')) for i in range(n)])  # Quattro spazi
-#     print(column_labels)
-    
-#     # Separators
-#     separator = '  ' + '+---' * n + '+'
-    
-#     for i in range(n):
-#         print(separator)
-        
-#         # Row + pieces
-#         row = f'{i+1:2d} ' + '|'.join([f' {cell[0]} ' if cell != 'EMPTY' else '   ' for cell in board[i]]) + ' |'
-#         print(row)
-    
-#     print(separator)
-    
 def tuple2alfanum(tuple_pos):
     row, col = tuple_pos
     col_alfnum = chr(ord('a') + col)
@@ -50,7 +26,7 @@ def alfnum2tuple(alfnum_pos):
     return (row_tuple, col_tuple)
 
 # take a string and a char and returns a list of all the indexes in which the char is found
-def find_all(original:str, tofind:str) -> list():
+def find_all(original:str, tofind:str) -> list:
     result = list()
     for i in range(len(original)):
         if original[i] == tofind:
