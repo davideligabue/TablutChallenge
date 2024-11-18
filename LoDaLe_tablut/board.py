@@ -1,11 +1,14 @@
 import numpy as np
 from utils import *
-# prova
+
 # CONSTANTS
 WHITE = "WHITE"
 BLACK = "BLACK"
 KING = "KING"
 EMPTY = "EMPTY"
+CAMP = "C"
+ESCAPE = "S"
+
 CASTLE = (4, 4)
 
 CAMPS = {   
@@ -99,12 +102,12 @@ class Board:
 
     def __init__(self, state):
         self.turn = state['turn']
-        self.board = np.array(state['board'])
+        self.board = np.transpose(np.array(state['board']))
         king_pos = np.where(self.board == KING)
         if king_pos[0].size == 0:
             self.king = None
         elif king_pos[0].size == 1:
-            self.king = (king_pos[1][0], king_pos[0][0])
+            self.king = (king_pos[0][0], king_pos[1][0])
         else:
             raise Exception("More than one king in the board") 
     
@@ -131,13 +134,20 @@ class Board:
     
     def get_cell(self, pos): 
         if self.is_within_bounds(pos):
-            return self.board[pos[0]][pos[1]]
+            cell = self.board[pos[0]][pos[1]]
+            if cell == EMPTY:
+                if pos in CAMPS["all"]:
+                    return CAMP
+                elif pos in ESCAPES["all"]:
+                    return ESCAPE
+            return cell
         else:
-            raise Exception("Trying to get value from out of bounds cell")
+            return "-"
     
     # given a segment of cells identified by starting position pos1 and end position pos2
     # returns a string which gives a summary of the content of each cell ordered from pos1 to pos2
-    # in the segment (starting point not included, end point included), format example: 'bbwee...' there are two blacks, one white and two empty
+    # in the segment (starting point not included, end point included), format example: 'bbwee...' there are two blacks, one white and two empty.
+    # A cell which is not in bound is flagged in the string with '-' char 
     def segment_occupation(self, pos1, pos2) -> dict:
         str_result = ""
         cells_result = []
@@ -147,20 +157,23 @@ class Board:
             sign = np.sign(delta[1])
             for i in range( sign, delta[1]+sign, sign ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
-                str_result += self.get_cell((pos1[0], pos1[1]+i))[0]
+                letter = self.get_cell((pos1[0], pos1[1]+i))[0]
+                str_result += letter
                 cells_result.append( (pos1[0], pos1[1]+i) )
         # when the move is orizontal
         elif delta[1] == 0:
             sign = np.sign(delta[0])
             for i in range( sign, delta[0]+sign, sign ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
-                str_result += self.get_cell((pos1[0]+i, pos1[1]))[0]
+                letter = self.get_cell((pos1[0]+i, pos1[1]))[0]
+                str_result += letter
                 cells_result.append( (pos1[0]+i, pos1[1]) )
         return {"str":str_result, "cells":cells_result}
     
     # given a center in the grid, it returns the Summary Object for the cells in the ring (of radius 1 or 2)
     # the Summary Object is a dictionary which has under the key "str" the string containing the info about cell occupations,
-    # under the key "cells" the position tuple corresponding to the string letter
+    # under the key "cells" the position tuple corresponding to the string letter.
+    # A cell which is not in bound is flagged in the string with '-' char 
     def ring_occupation(self, center, radius) -> dict:
         str_result = ""
         cell_result = []
@@ -168,10 +181,6 @@ class Board:
             raise Exception("In 'ring_occupation' radius must be either 1 or 2")
         # take the corners of the ring around the center (in order: top-left, top-right, bottom-right, bottom-left)
         corners = [(center[0]-radius, center[1]-radius),(center[0]+radius, center[1]-radius),(center[0]+radius, center[1]+radius),(center[0]-radius, center[1]+radius)]
-        for corner in corners:
-            # if the corner is outside the grid return None
-            if not self.is_within_bounds(corner):
-                return None
         # get the summary object for the content of the ring, using the method 'segment_occupation'
         # the resulting object is composed by the cells of the content of cells starting from top left corner (not included) going in 
         # clockwise direction (until it includes the top left corner)
@@ -191,35 +200,15 @@ class Board:
         # The starting position must contain the piece specified in move
         if self.get_cell(move.start) != move.piece:
             return False
-       
-        # this check shouldn't be needed, all the Moves should altready be through empty spaces
-        # for the traversed path every cell must be empty
-        #segment_info = self.segment_occupation(move.start, move.end)
-        #for char in segment_info:
-            #if char != EMPTY[0]:
-                #return False
-        
         # only the king can move in the castle
         if move.end == CASTLE and move.piece != KING:
             return False
-        
         # only the black can move in camps
         if move.end in CAMPS['all'] and move.piece != BLACK:
             return False
-        
         # if a black piece is outside a camp it cannot re-enter
         if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
             return False
-        
-        ## ???? non trovo il senso di questo controllo
-
-        # For the king, check if it is moving towards an escape point
-        #if piece_type == 'KING' and (to_x, to_y) in ESCAPES:
-            # The king can only move to an escape if there is a clear path (no black pieces in the way)
-            #if not self.is_escape_clear(to_x, to_y):
-                #return False
-        
-        # If all checks pass, the move is valid
         return True
     
     def is_king_escaped(self):
@@ -236,7 +225,7 @@ class Board:
             # if the end position of the move has a king adjacent
             if self.is_adjacent(move.end, self.king):
                 # check the surrounding of the king in even positions (up, down, left, right)
-                king_surround = self.ring_occupation(CASTLE, 1)
+                king_surround = self.ring_occupation(self.king, 1)
                 black_occupation = find_all(king_surround["str"], BLACK[0])
                 blacks_in_even_position = 0
                 for index in black_occupation:
@@ -331,39 +320,39 @@ class Board:
                 if move.piece == KING:
                     self.king = move.start
     
-    # returns all the current possible moves in the board, based on the specified color
-    def get_all_moves(self, color):
-        # select the right mask based on color
-        mask = None
-        result = []
-        if color == WHITE:
-            mask = (self.board == WHITE) | (self.board == KING)
-        elif color == BLACK:
-            mask = (self.board == BLACK)
+    def get_all_pieces_of_color(self, color):
+        mask = (self.board == color)
         positions = np.where(mask)
-        for i in range(len(positions[0])):
-            moves = self.get_all_moves_for_piece((positions[0][i], positions[1][i]))
+        position_list = []
+        for i in range(positions[0].size):
+            position_list.append((positions[0][i], positions[1][i]))
+        return position_list
+    
+    # returns all the current possible moves in the board, based on the specified color
+    def get_all_moves(self, color, moves):
+        result = []
+        move_sequence = self.apply_moves(moves)
+        positions = self.get_all_pieces_of_color(color)
+        for i in range(len(positions)):
+            moves = self.get_all_moves_for_piece(positions[i])
             for mv in moves:
                 result.append(mv)
+        self.reverse_moves(move_sequence)
         return result
+    
+    def get_king(self):
+        return self.king
 
     
     def pretty_print(self):
-        # Board dimension
-        n = self.board.shape[0]
-        
-        # Literal labels (A, B, C, ...)
+        board = np.transpose(self.board)
+        n = board.shape[0]
         column_labels = '    ' + '   '.join([chr(i + ord('A')) for i in range(n)])  # Quattro spazi
         print(column_labels)
-        
-        # Separators
         separator = '  ' + '+---' * n + '+'
-        
         for i in range(n):
-            print(separator)
-            
+            print(separator) 
             # Row + pieces
-            row = f'{i+1:2d} ' + '|'.join([f' {cell[0]} ' if cell != 'EMPTY' else '   ' for cell in self.board[i]]) + ' |'
+            row = f'{i+1:2d} ' + '|'.join([f' {cell[0]} ' if cell != 'EMPTY' else '   ' for cell in board[i]]) + ' |'
             print(row)
-        
         print(separator)
