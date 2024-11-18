@@ -178,7 +178,10 @@ class Board:
         # when the move is vertical
         if delta[0] == 0:
             sign = np.sign(delta[1])
-            for i in range( sign, delta[1]+sign, sign ):
+            step = sign
+            if step == 0:
+                step = 1
+            for i in range( sign, delta[1]+sign, step ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 letter = self.get_cell((pos1[0], pos1[1]+i))[0]
                 str_result += letter
@@ -186,7 +189,10 @@ class Board:
         # when the move is orizontal
         elif delta[1] == 0:
             sign = np.sign(delta[0])
-            for i in range( sign, delta[0]+sign, sign ):
+            step = sign
+            if step == 0:
+                step = 1
+            for i in range( sign, delta[0]+sign, step ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 letter = self.get_cell((pos1[0]+i, pos1[1]))[0]
                 str_result += letter
@@ -272,8 +278,8 @@ class Board:
         string_indexes = []
         if move.piece == WHITE or move.piece == KING: # if the moved piece is white or king we are interested in black 
             string_indexes = find_all(surround["str"], BLACK[0])
-        if move.piece == BLACK: # if the moved piece is black we are interested in white
-            string_indexes = find_all(surround["str"], WHITE[0])
+        if move.piece == BLACK: # if the moved piece is black we are interested in white and king
+            string_indexes = find_all(surround["str"], WHITE[0]) + find_all(surround["str"], KING[0])
         # for each surrounding adversary
         for elem in string_indexes:
             if elem % 2 == 0:
@@ -292,7 +298,7 @@ class Board:
         if not self.is_within_bounds(pos):
             raise Exception("Position not in the grid for 'get_all_moves_for_piece' call")
         piece = self.get_cell(pos)
-        if piece == EMPTY:
+        if piece == EMPTY or piece == CAMP or piece == ESCAPE:
             raise Exception("Empty piece when calling 'get_all_moves_for_piece'")
         # coordinates of all the cells on the border of the grid moving orthogonally
         borders = [(pos[0], 0), (9, pos[1]), (pos[0], 9), (0, pos[1])]
@@ -303,7 +309,8 @@ class Board:
         result = []
         for direction in segment_occupations:
             for i in range(len(direction["str"])):
-                if direction["str"][i] != EMPTY[0]:
+                if direction["str"][i] != EMPTY[0] and direction["str"][i] != CAMP[0] \
+                and direction["str"][i] != ESCAPE[0]:
                     break
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):

@@ -41,8 +41,8 @@ class TestBoard(unittest.TestCase):
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
             ])
-        }
-        return Board(state)# KING 2,4 -> 2,5 | WHITE 4,5 -> 4,6 | BLACK 0,5 -> 1,5 | BLACK 8,5 -> 3,5
+        } # 8+6+12+11+9+11
+        return Board(state)# BLACK ... | WHITE ..
     
     def test_board_initialization(self):
         board = self.initialize_Board()
@@ -116,9 +116,25 @@ class TestBoard(unittest.TestCase):
         # capturing king
         # KING 2,4 -> 2,5 | WHITE 4,5 -> 4,6 | BLACK 0,5 -> 1,5 | BLACK 8,5 -> 3,5
         move_seq = board.apply_moves([Move((2,4),(2,5),KING), Move((4,5),(4,6),WHITE), Move((0,5),(1,5),BLACK), Move((8,5),(3,5),BLACK)])
-        board.pretty_print()
         self.assertTrue(board.is_king_captured(), "King should be captured")
         self.assertFalse(board.is_king_escaped(), "King should not be escaped")
+        board.reverse_moves(move_seq)
+        # escape king
+        board.apply_moves([Move((2,4),(2,0),KING)])
+        self.assertTrue(board.is_king_escaped(), "King should be escaped")
+
+
+    def test_get_global_possibilities(self):
+        board = self.initialize_Board_simple_case()
+        # test get all pieces
+        self.assertTrue(len(board.get_all_pieces_of_color(WHITE)) == 2, "Wrong matching number of white pieces")
+        self.assertTrue(len(board.get_all_pieces_of_color(BLACK)) == 3, "Wrong matching number of white pieces")
+        self.assertTrue(len(board.get_all_pieces_of_color(KING)) == 1, "Wrong king found")
+        # test get all moves
+        self.assertTrue(len(board.get_all_moves(KING, [])) == 12, "Wrong number of possible moves for king")
+        self.assertTrue(len(board.get_all_moves(KING, [])) + len(board.get_all_moves(BLACK, [])) + len(board.get_all_moves(WHITE, [])) == 55, "Wrong number of possible total moves")
+
+
         
 
 
