@@ -41,10 +41,10 @@ for ((i=1; i<=NUM_TESTS; i++)); do
         BLACK_PID=$!
 
         # DEBUG
-        echo "Listening enabled. Logs are being written to:"
-        echo "  Server log: $SERVER_LOG"
-        echo "  White player log: $WHITE_LOG"
-        echo "  Black player log: $BLACK_LOG"
+        # echo "Listening enabled. Logs are being written to:"
+        # echo "  Server log: $SERVER_LOG"
+        # echo "  White player log: $WHITE_LOG"
+        # echo "  Black player log: $BLACK_LOG"
         
         # Aspetta che i processi completino
         wait $SERVER_PID
@@ -59,3 +59,6 @@ mkdir -p "./logs"
 cp -R "$OUTPUTS_DIR/"* "./logs/"
 
 echo "All tests completed!"
+
+echo "Start parsing log files:"
+python3 extractor.py

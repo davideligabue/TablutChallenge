@@ -3,7 +3,7 @@ from board import Board, Move
 import random
 from utils import *
 from collections import deque
-from heuristics import grey_heuristic
+from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3
 import math
 
 VERBOSE = True
@@ -34,15 +34,20 @@ class Node:
         return f"Node({self.state})"
     
     def get_children(self, color):
-        moves = self.board.get_all_moves(color)
-        for m in moves: # all the pieces
-            new_state = self.state.copy()
-            new_state.append(m)
-            self.children.append(Node(
-                board=self.board,
-                state=new_state,
-                depth=self.depth+1
-            ))        
+        # Lazy loading
+        if len(self.children) != 0: 
+            return self.children
+        else :
+            moves = self.board.get_all_moves(color, self.state)
+            for m in moves: # all the pieces
+                new_state = self.state.copy()
+                new_state.append(m)
+                self.children.append(Node(
+                    board=self.board,
+                    state=new_state,
+                    depth=self.depth+1
+                ))        
+            return self.children
             
     ##############################################################################################################################################################
     # SEARCH ALGORITHMS ##########################################################################################################################################
@@ -51,7 +56,7 @@ class Node:
     def minimax_alpha_beta(
             self, 
             maximizing_player: bool,
-            h_flag: int,
+            h_flag: str,
             depth: int, 
             alpha: float = -float('inf'), 
             beta: float = float('inf')
@@ -63,15 +68,15 @@ class Node:
         # Se siamo alla profondità massima o in un nodo fogli
         if (depth==0) or (len(self.get_children(color))==0):
             match h_flag:
-                case 1 : heuristic = ...
-                case 2 : heuristic = ...
-                case 3 : heuristic = ...
-                case _ : heuristic = grey_heuristic
-            return heuristic(self), None  # Aumenta il contatore
+                case "1" : heuristic = heuristic_1
+                case "2" : heuristic = heuristic_2
+                case "3" : heuristic = heuristic_3
+                case "grey" : heuristic = grey_heuristic
+            return heuristic(self), None  
 
         max_eval = -float('inf')
         min_eval = float('inf')
-        for child in self.get_children():
+        for child in self.get_children(color):
             eval, move = child.minimax_alpha_beta(
                 maximizing_player=not maximizing_player,
                 h_flag=h_flag, 

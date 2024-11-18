@@ -10,7 +10,7 @@ import traceback
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
-H_FLAGS = ["grey", "b/w"]
+H_FLAGS = ["grey", "1", "2", "3"]
 
 VERBOSE = True      # quickly enable/disable verbose
 

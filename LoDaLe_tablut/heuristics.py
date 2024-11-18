@@ -2,6 +2,15 @@ import math
 from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
 from utils import cells_on_line
 
+def heuristic_1(state: Board) -> int:
+    pass
+
+def heuristic_2(state: Board) -> int:
+    pass
+
+def heuristic_3(state: Board) -> int:
+    pass
+
 def grey_heuristic(state: Board) -> int:
     ''' 
     MAX = white
