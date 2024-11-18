@@ -1,118 +1,122 @@
 import math
 from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
 from utils import cells_on_line
+import numpy as np
 
-def grey_heuristic(state: Board) -> int:
-    ''' 
+
+#### I WILL RECIVE ############################################################################
+# - il metodo segment occupation e ring occupation devono ritornare anche: camps ed escapes (non prioritari)
+# - 'C' = CAMP, 'E' = EMPTY, 'S' = ESCAPE, 'B' = BLACK, 'W' = WHITE
+# - il metodo highlight_covered_escapes che restituisce le caselle a partire dalle escapes che sono libere (prima di incontrare ostacoli o pedine nere) 
+#   (quindi potenzialmente occupabili da pedoni bianchi). Restituisce un np.array contenente le tuple delle celle desiderate.
+###############################################################################################
+
+def grey_heuristic(node) -> int:
+    '''
     MAX = white
-    
+
     MIN = black
     '''
-    
+
+    board = node.board
+
     ### ALL VARIABLES ##################################################################################################################
     king_pos = None                     # 1. Check if the player has won or lost
     free_routes_to_escapes = 0          # 2. How many free routes will have the king to reach the escapes
     free_routes = 0                     # 3. How many free routes will have the king
-    surrounding_protection = 0          # 4. How well the king is protected by whites (3x3 kernel on king)
-    surrounding_threats = 0             # 5. How much in danger (has non-white obstacles) is the king (3x3 kernel on king)
-    possible_threats = 0                # 6. How well the king is protected by whites (untill the first obstalces)
-    possible_protection = 0             # 7. How much in danger (has non-white obstacles) is the king (untill the first obstalces)
-    num_rombus_pos = 0                  # 8. The black must tend to have a rombus disposition
-    num_covered_escapes = 0             # 9. The black may tend to cover the escapes
-    num_double_covered_escapes = 0      # 10. The black should prefer the double cover escapes (covers 2 with 1 pawn)
-    min_escape_dist = 0                 # 11. Distance(King, nearest escape)
-    num_whites = 0                      # 12. The number of whites     
-    num_blacks = 0                      # 13. The number of blacks
+    surrounding_protection = 0          # 4. How well the king is protected by whites (with adjacent whites)
+    surrounding_threats = 0             # 5. How much in danger (has non-white obstacles) is the king (with adjacent black or camps)
+    possible_protection = 0             # 6. How well the king is protected by whites (untill the first obstalces)
+    possible_checkers = 0               # 7. How many black can be adjacent to the king the next move
+    possible_threats = 0                # 8. How much in danger (has non-white obstacles) is the king (untill the first obstalces)
+    num_rombus_pos = 0                  # 9. The black must tend to have a rombus disposition
+    num_covered_escapes = 0             # 10. The black may tend to cover the escapes
+    num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
+    # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
+    white_covers_escape = 0             # 12. Escapes which are covered first by a white
+    num_whites = 0                      # 13. The number of whites
+    num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
-    
-    
-    
-    ### LOOP OVER THE TABLE #############################################################
-    for i in range(9):
-        for j in range(9):
-            piece = state.board[i][j]
-            if piece == 'BLACK':
-                num_blacks += 1
-                if ((i,j) in ROMBUS_POS):
-                    num_rombus_pos += 1
-                if ((i,j) in ESCAPE_COVER):
-                    num_covered_escapes += 1
-                if ((i,j) in DOUBLE_ESCAPE_COVER):
-                    num_double_covered_escapes += 1
-            elif (piece == 'WHITE') or (piece == 'KING'):
-                num_whites += 1
-                if piece == 'KING':
-                    king_pos = (king_x, king_y) = i, j
-                    if king_pos in ESCAPES:  #If the king is in an escape ==> white won
-                        return float('inf') 
-    ####################################################################################
-    
-    
+
+
+    ### CHECK THE TABLE ###################################################################################################
+    num_whites = board.get_all_whites()
+    num_blacks = board.get_all_blacks()
+    king_pos = board.get_king()
+
+    values_in_covered_escapes = board[ROMBUS_POS[:, 0], ROMBUS_POS[:, 1]]
+    values_in_double_covered_escapes = board[ESCAPE_COVER[:, 0], ESCAPE_COVER[:, 1]]
+    values_in_rombus = board[DOUBLE_ESCAPE_COVER[:, 0], DOUBLE_ESCAPE_COVER[:, 1]]
+    num_rombus_pos = np.sum(values_in_rombus == 'B')
+    num_covered_escapes = np.sum(values_in_covered_escapes == 'B')
+    num_double_covered_escapes = np.sum(values_in_double_covered_escapes == 'B')
+    ########################################################################################################################
+
+
+
     # If the king got captured ==> white lost
     if not king_pos:
         return -float('inf')
-    
-    
-    
-    ### LOOP ALL AROUND THE KING ##########################################################
-    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-    for dx, dy in directions:
-        adj_x, adj_y = king_x + dx, king_y + dy
-        
-        # First layer check
-        if state.is_within_bounds(adj_x, adj_y):
-            adj_piece = state.board[adj_x][adj_y]
-            if adj_piece == 'BLACK' or state.is_special_tile(adj_x, adj_y):
-                surrounding_threats += 1
-                continue    # Already found an obstacle in this direction, try a new one
-            if adj_piece == 'WHITE':
-                surrounding_protection += 1
-                continue    # Already found an obstacle in this direction, try a new one
-        
-        # First + following layers check
-        while state.is_within_bounds(adj_x, adj_y):
-            adj_x, adj_y = adj_x + dx, adj_y + dy
-            if state.is_within_bounds(adj_x, adj_y):
-                if state.board[adj_x][adj_y] == 'BLACK' or state.is_special_tile(adj_x, adj_y):
-                    possible_threats += 1
-                    break   # Already found an obstacle in this direction, try a new one
-                if state.board[adj_x][adj_y] == 'WHITE':
-                    possible_protection += 1
-                    break   # Already found an obstacle in this direction, try a new one
-            
-        if (adj_x - dx, adj_y - dy) in ESCAPES :
+
+
+
+    ### CHECK ALL AROUND THE KING ###########################################################################################
+    king_ring = board.ring_occupation(king_pos, 1)["str"]
+    for i in range(4):
+        if king_ring[i*2] == 'W':
+            surrounding_protection += 1
+        if king_ring[i*2] == 'B' or king_ring[i*2] == 'C':
+            surrounding_threats += 1
+
+    king_x, king_y = king_pos
+    checking_start = [(king_x-1, king_y), (king_x, king_y+1), (king_x+1, king_y), (king_x, king_y-1)]
+    checking_arrive = [(0, king_y),(king_x, 8), (8, king_y), (king_x, 0)]
+    temp_arrive = [(king_x-1, 0), (0, king_y+1), (king_x+1, 8), (0, king_y-1), (king_x-1, 8), (8, king_y+1), (king_x+1, 0), (8, king_y-1)]
+    # Check the column and the row of the king
+    for i in range(4):
+        column_check = board.segment_occupation(king_pos, checking_arrive[i])["str"]
+        if column_check[-1] == 'S' and (all(c == 'E' for c in column_check[:-1]) or len(column_check) == 1):
             free_routes_to_escapes += 1
-    #######################################################################################
-    
-    
-    
+        else:
+            for car in column_check:
+                if car == 'B':
+                    possible_checkers += 1
+                    possible_threats += 1
+                    break
+                elif car == 'W':
+                    possible_protection += 1
+                    break
+    # Check the clomn and the row near the king
+    for i in range(8):
+        column_check = board.segment_occupation(checking_start[i%2], temp_arrive)["str"]
+        for car in column_check:
+            if car == 'B':
+                possible_checkers += 1
+                break
+            elif car == 'W':
+                possible_protection += 1
+                break
+            elif car == 'S' or car == 'C':
+                break
+    #############################################################################################################################
+
+
+
+    ### Check covered escapes by white ##########################################################################################
+    highlight_space = board.highlight_covered_escapes()
+    values_in_highlight_escapes = board[highlight_space[:, 0], highlight_space[:, 1]]
+    white_covers_escape = np.sum(values_in_highlight_escapes == 'W')
+    ##############################################################################################################################
+
+
     free_routes = 4 - possible_threats - possible_protection - surrounding_threats - surrounding_protection
-    
-    
-    
-    def get_min_escape_dist():
-        min_dist = min([abs(king_x - ex) + abs(king_y - ey) for ex, ey in ESCAPES])
-        c = 0
-        ex_min, ey_min = None, None
-        for ex, ey in ESCAPES:
-            if abs(king_x - ex) + abs(king_y - ey) == min_dist:
-                c += 1
-                ex_min, ey_min = ex, ey
-        if c in [1,2] :
-            cells_among_king_escape_min = [state.board[x][y] for x,y in cells_on_line(king_x, king_y, ex_min, ey_min)]
-            if "BLACK" not in cells_among_king_escape_min:
-                return math.sqrt(min_dist)
-            else: 
-                return math.sqrt(50)  # we don't consider the distance if there are blacks in the middle  (the difference will be 0)
-        else :
-            return math.sqrt(50)      # we don't consider the distance if it is equidistant from 2 points (the difference will be 0)
-    
-    
-    
+
+
+
     ### Compute scorings (DECIDE THE WEIGHTS also using non linear functions) #####################################
-    
+
     # Use weight to optimize the module of the score
-    W1 = 3    # Bilancia la distanza dall'escape
+    # W1 = 3    # Bilancia la distanza dall'escape
     W2 = 800  # Diminuisce l'enfasi sui percorsi liberi verso l'escape
     W3 = 40   # Incentiva percorsi liberi solo se l'escape non è immediato
     W4 = 25   # Migliora la protezione del re
@@ -123,53 +127,53 @@ def grey_heuristic(state: Board) -> int:
     W9 = 60   # Diminuire l'effetto negativo di escape coperti
     W10 = 150 # Riduce l'enfasi su doppi escape coperti
     W11 = 10  # Bilancia il vantaggio numerico
-    
+
     # Use a dict for better usability and debug
-    scorings = { 
-        
-        # The king should consider the nearest escape only if it is not surrounded by blacks 
+    scorings = {
+
+        # The king should consider the nearest escape only if it is not surrounded by blacks
         # in that direction (???)
         'nearest_escape_distance_score':
             W1 * (math.sqrt(50) - get_min_escape_dist())    if free_routes_to_escapes==0
-                                                            else 0, 
+                                                            else 0,
 
-        # The king must always consider options where he can win in one move 
-        # NOTE: forse potremmo usare direttamente +infinito ma così magari eviteremmo 
+        # The king must always consider options where he can win in one move
+        # NOTE: forse potremmo usare direttamente +infinito ma così magari eviteremmo
         # scelte in cui ci sono più di 2 vie libere (btw vittoria assicurata)
         'free_routes_to_escapes_score': W2 * free_routes_to_escapes,
-        
-        # The king must consider free routes that don't lead to victory only if 
+
+        # The king must consider free routes that don't lead to victory only if
         # there are not free routes to escapes
-        # NOTE: dobbiamo mettere che altrimenti il peso è negativo perchè altrimenti lo score 
+        # NOTE: dobbiamo mettere che altrimenti il peso è negativo perchè altrimenti lo score
         # resterebbe più o meno uguale e dobbiamo rimarcare che sia una brutta idea
-        'free_routes_score': 
-            W3 * free_routes    if free_routes_to_escapes==0 
+        'free_routes_score':
+            W3 * free_routes    if free_routes_to_escapes==0
                                 else - W3 * free_routes,
 
-        # The king should consider how well he is protected only if he is not in a winning 
+        # The king should consider how well he is protected only if he is not in a winning
         # position, so if he is not that much surrounded by blacks and he is next to an escape
-        # NOTE: dobbiamo mettere che altrimenti il peso è negativo perchè altrimenti lo score 
+        # NOTE: dobbiamo mettere che altrimenti il peso è negativo perchè altrimenti lo score
         # resterebbe più o meno uguale e dobbiamo rimarcare che sia una brutta idea
         'surrounding_protection_score':
             W4 * surrounding_protection     if free_routes_to_escapes == 0
-                                            else - W4 * surrounding_protection,  
+                                            else - W4 * surrounding_protection,
 
-        # The king should consider how much he is in danger only if he is not in a winning 
+        # The king should consider how much he is in danger only if he is not in a winning
         # position, so if he is not that much surrounded by blacks and he is next to an escape
         'surrounding_threats_score':
-            - W5 * surrounding_threats  if free_routes_to_escapes == 0 
+            - W5 * surrounding_threats  if free_routes_to_escapes == 0
                                         else 0,
 
         # Same as before (???)
         # NOTE: ancora meno importante se il re è vicino agli escapes
         'possible_threats_score':
-            - W6 * possible_threats     if free_routes_to_escapes == 0 
+            - W6 * possible_threats     if free_routes_to_escapes == 0
                                         else 0,
 
         # Same as before (???)
         # NOTE: ancora meno importante se il re è vicino agli escapes
         'possible_protection_score':
-            W7 * possible_protection    if free_routes_to_escapes == 0 
+            W7 * possible_protection    if free_routes_to_escapes == 0
                                         else - W7 * possible_protection,
 
         # The king must consider them only if he is inside the rombus
@@ -181,23 +185,23 @@ def grey_heuristic(state: Board) -> int:
         # The king must consider them only if he has no other escapes
         # NOTE: servono pesi alti
         'covered_escapes_score':
-            - W9 * num_covered_escapes  if free_routes_to_escapes == 0 
+            - W9 * num_covered_escapes  if free_routes_to_escapes == 0
                                         else 0,
 
         # The king must consider them only if he has no other escapes
         # NOTE: servono pesi molto molto alti
         'double_covered_escapes_score':
-            - W10 * num_double_covered_escapes  if free_routes_to_escapes == 0 
+            - W10 * num_double_covered_escapes  if free_routes_to_escapes == 0
                                                 else 0,
-        
-        # The player must consider the numerical advantage only if he is not in 
-        # a winning position                    
-        'numerical_advantage' : 
-            W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0 
+
+        # The player must consider the numerical advantage only if he is not in
+        # a winning position
+        'numerical_advantage' :
+            W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0
                                             else 0
     }
-    
+
     # state.pretty_print()
     # print(f"State evaluated with score {sum(scorings.values())}")
-    
+
     return sum(scorings.values())
