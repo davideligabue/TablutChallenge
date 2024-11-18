@@ -33,8 +33,8 @@ class Node:
     def __repr__(self) -> str:
         return f"Node({self.state})"
     
-    def get_children(self):
-        moves = self.board.get_all_moves()
+    def get_children(self, color):
+        moves = self.board.get_all_moves(color)
         for m in moves: # all the pieces
             new_state = self.state.copy()
             new_state.append(m)
@@ -58,9 +58,10 @@ class Node:
         ) -> Tuple[int, Move]:
 
         best_move = None  
+        color = "WHITE" if maximizing_player else "BLACK"
 
-        # Se siamo alla profondità massima o in un nodo foglia
-        if (depth==0) or (len(self.get_children())==0):
+        # Se siamo alla profondità massima o in un nodo fogli
+        if (depth==0) or (len(self.get_children(color))==0):
             match h_flag:
                 case 1 : heuristic = ...
                 case 2 : heuristic = ...

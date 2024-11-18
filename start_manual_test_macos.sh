@@ -10,7 +10,7 @@ osascript -e "tell application \"Terminal\" to do script \"cd $SERVER_PATH && ja
 sleep 1 
 
 # Open terminal tab for client WHITE
-osascript -e "tell application \"Terminal\" to do script \"cd $PLAYER_PATH && python3 PLAYER.py WHITE 60 127.0.0.1\""
+osascript -e "tell application \"Terminal\" to do script \"cd $PLAYER_PATH && python3 PLAYER.py WHITE 60 127.0.0.1 grey\""
 
 # Open terminal tab for client BLACK
-osascript -e "tell application \"Terminal\" to do script \"cd $PLAYER_PATH && python3 PLAYER.py BLACK 60 127.0.0.1\""
+osascript -e "tell application \"Terminal\" to do script \"cd $PLAYER_PATH && python3 PLAYER.py BLACK 60 127.0.0.1 grey\""
