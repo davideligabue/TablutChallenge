@@ -34,21 +34,32 @@ class TestBoard(unittest.TestCase):
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                ['EMPTY', 'EMPTY', 'KING', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'KING', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
             ])
         }
-        return Board(state)# 4,5 -> 1,5 white | 8,5 -> 2,5  black 
+        return Board(state)# KING 2,4 -> 2,5 | WHITE 4,5 -> 4,6 | BLACK 0,5 -> 1,5 | BLACK 8,5 -> 3,5
     
+    def test_board_initialization(self):
+        board = self.initialize_Board()
+        self.assertEqual(board.get_cell((3,0)), "BLACK")
+        self.assertEqual(board.get_cell((4,4)), "KING")
+        self.assertEqual(board.get_cell((6,4)), "WHITE")
+
+        board = self.initialize_Board_simple_case()
+        self.assertEqual(board.get_cell((2,4)), "KING")
+        self.assertEqual(board.get_cell((4,5)), "WHITE")
+        self.assertEqual(board.get_cell((0,5)), "BLACK")
+
     def test_king_position(self):
         board = self.initialize_Board()
         self.assertEqual(board.king, CASTLE, "Bad king initializazion in starting position")
         board = self.initialize_Board_simple_case()
-        self.assertEqual(board.king, (2,3), "Bad king initialization in different position")
+        self.assertEqual(board.king, (2,4), "Bad king initialization in different position")
 
     def test_performing_checks(self):
         board = self.initialize_Board()
@@ -71,7 +82,6 @@ class TestBoard(unittest.TestCase):
         self.assertFalse(board.is_valid_move(Move((4,5),(3,5),BLACK)), "If move.piece is Black you cannot move a white piece")
         self.assertFalse(board.is_valid_move(Move((4,5),CASTLE,WHITE)), "Only king should be able to move in CASTLE")
 
-
     def test_initial_ring_occupation(self):
         board = self.initialize_Board()
         occupation_obj = {
@@ -79,27 +89,36 @@ class TestBoard(unittest.TestCase):
             "cells" : [(4,3),(5,3),(5,4),(5,5),(4,5),(3,5),(3,4),(3,3)]
         }
         self.assertDictEqual(occupation_obj, board.ring_occupation((4,4), 1), "Error object ring occupation")
-        occupation_str = "EEEWWKWWEEEEBBBE"
+        occupation_str = "EEEWWKWWEEESBBBS"
         self.assertEqual(occupation_str, board.ring_occupation((2,4), 2)["str"], "Error string of ring (n=2) occupation")
 
     def test_move_pieces_around(self):
         board = self.initialize_Board_simple_case()
-        # 4,5 -> 1,5 white | 8,5 -> 2,5  black 
+        # moving pieces
         move_seq = board.apply_moves([Move((4,5),(1,5),WHITE), Move((8,5),(2,5),BLACK)])
         self.assertEqual(len(move_seq), 3, "Wrong sequence of moves returned by apply_moves when capturing a checker")
-        new_state = np.array([
+        new_state = np.transpose( np.array([
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                ['EMPTY', 'EMPTY', 'KING', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'KING', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['BLACK', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY']
-            ])
-        print(board.board)
+            ]) )
         self.assertTrue(np.array_equiv(new_state, board.board), "Wrong expected state after moves and checker capture")
+        # reversing the moves
+        old_state = self.initialize_Board_simple_case().board
+        board.reverse_moves(move_seq)
+        self.assertTrue(np.array_equiv(old_state, board.board), "Wrong expected state after reversing moves")
+        # capturing king
+        # KING 2,4 -> 2,5 | WHITE 4,5 -> 4,6 | BLACK 0,5 -> 1,5 | BLACK 8,5 -> 3,5
+        move_seq = board.apply_moves([Move((2,4),(2,5),KING), Move((4,5),(4,6),WHITE), Move((0,5),(1,5),BLACK), Move((8,5),(3,5),BLACK)])
+        board.pretty_print()
+        self.assertTrue(board.is_king_captured(), "King should be captured")
+        self.assertFalse(board.is_king_escaped(), "King should not be escaped")
         
 
 
