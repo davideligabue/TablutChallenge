@@ -27,6 +27,29 @@ ESCAPES = {
 }
 ESCAPES["all"] = ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"]
 
+ROMBUS_POS = { 
+            (1,2),       (1,6),
+    (2,1),                      (2,7),
+
+    (6,1),                      (6,7),
+            (7,2),       (7,6)
+}
+
+ESCAPE_COVER = {
+    (1,1),(1,2),        (1,6),(1,7),
+    (2,1),                    (2,7),
+
+    (6,1),                    (6,7),
+    (7,1),(7,2),        (7,6),(7,7)
+}
+
+DOUBLE_ESCAPE_COVER = {
+    (1,1),          (1,7),
+
+    (7,1),          (7,7)
+}
+
+
 '''
 STATE (initial) :
 
