@@ -1,6 +1,5 @@
 import math
 from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
-from utils import cells_on_line
 import numpy as np
 
 
@@ -33,15 +32,15 @@ def grey_heuristic(node) -> int:
     num_covered_escapes = 0             # 10. The black may tend to cover the escapes
     num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
     # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
-    white_covers_escape = 0             # 12. Escapes which are covered first by a white
+    # white_covers_escape = 0             # 12. Escapes which are covered first by a white
     num_whites = 0                      # 13. The number of whites
     num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
 
 
     ### CHECK THE TABLE ###################################################################################################
-    num_whites = board.get_all_whites()
-    num_blacks = board.get_all_blacks()
+    num_whites = board.get_all_pieces_of_color(WHITE)
+    num_blacks = board.get_all_pieces_of_color(BLACK)
     king_pos = board.get_king()
 
     values_in_covered_escapes = board[ROMBUS_POS[:, 0], ROMBUS_POS[:, 1]]
@@ -103,9 +102,9 @@ def grey_heuristic(node) -> int:
 
 
     ### Check covered escapes by white ##########################################################################################
-    highlight_space = board.highlight_covered_escapes()
-    values_in_highlight_escapes = board[highlight_space[:, 0], highlight_space[:, 1]]
-    white_covers_escape = np.sum(values_in_highlight_escapes == 'W')
+    # highlight_space = board.highlight_covered_escapes()
+    # values_in_highlight_escapes = board[highlight_space[:, 0], highlight_space[:, 1]]
+    # white_covers_escape = np.sum(values_in_highlight_escapes == 'W')
     ##############################################################################################################################
 
 
@@ -133,9 +132,9 @@ def grey_heuristic(node) -> int:
 
         # The king should consider the nearest escape only if it is not surrounded by blacks
         # in that direction (???)
-        'nearest_escape_distance_score':
-            W1 * (math.sqrt(50) - get_min_escape_dist())    if free_routes_to_escapes==0
-                                                            else 0,
+        # 'nearest_escape_distance_score':
+            # W1 * (math.sqrt(50) - get_min_escape_dist())    if free_routes_to_escapes==0
+                                                            # else 0,
 
         # The king must always consider options where he can win in one move
         # NOTE: forse potremmo usare direttamente +infinito ma così magari eviteremmo
@@ -176,10 +175,9 @@ def grey_heuristic(node) -> int:
             W7 * possible_protection    if free_routes_to_escapes == 0
                                         else - W7 * possible_protection,
 
-        # The king must consider them only if he is inside the rombus
+        # The king must consider them only if he is inside the rombus and if the blacks are enough to create the rombus
         'rombus_position_score':
-            - W8 * num_rombus_pos       if free_routes_to_escapes == 0 or \
-                                            min_escape_dist < 2
+            - W8 * num_rombus_pos       if free_routes_to_escapes == 0 and num_blacks > 8
                                         else 0,
 
         # The king must consider them only if he has no other escapes
