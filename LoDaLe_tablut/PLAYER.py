@@ -10,19 +10,20 @@ import traceback
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
+H_FLAGS = ["grey", "1", "2", "3"]
+
 VERBOSE = True      # quickly enable/disable verbose
 
-TYPE = "search-algorithm"
+TYPE = "search-algorithm" # TODO: rimuovere se non usiamo altro
 # TYPE = "machine-learning"
 # TYPE = "genetic-algorithm"
 
-SEARCH_TYPE = "random"                                                   
-# SEARCH_TYPE = "alpha_beta_cut"               
+SEARCH_TYPE = "alpha_beta_cut"               
 
 def main():
     
     ## Check that there aren't missing or excessing args ##
-    if len(sys.argv) != 4:
+    if len(sys.argv) != 5:
         if VERBOSE : print("Wrong number of args, it should be: python3 __main__.py <color(White/Black)> <timeout(seconds)> <IP_server>")
         sys.exit(1)
     
@@ -40,12 +41,18 @@ def main():
         if VERBOSE : print("Wrong timeout, it should be an integer")
         sys.exit(1)
     
-    # - Ip address + 
+    # - Ip address 
     ip = sys.argv[3]          
     if not check_ip(ip):
         if VERBOSE : print("Wrong ip format")
         sys.exit(1)
     port = PORT[color]
+    
+    # - Heuristic FLAG        # TODO: togliere
+    h_flag = sys.argv[4]
+    if h_flag not in H_FLAGS:
+        if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
+        sys.exit(1)
     
     ## Initialize the socket ##
     s = SocketManager(ip, port)
@@ -55,15 +62,12 @@ def main():
     ###############################################################################
     ### GAME CYCLE ################################################################
     ###############################################################################
-    
-    # May be useful
-    boards_history = []     # List of the boards, useful to track the game
-    
+        
     # Useful vars
     if TYPE == "machine-learning" : 
         dataset_path = "../dataset"
-        dataset = data = np.load(dataset_path + "/dataset_moves.npy", allow_pickle=True)
-        results = data = np.load(dataset_path + "/dataset_results.npy", allow_pickle=True)
+        dataset = np.load(dataset_path + "/dataset_moves.npy", allow_pickle=True)
+        results = np.load(dataset_path + "/dataset_results.npy", allow_pickle=True)
         n = 0
     
     try:
@@ -73,10 +77,7 @@ def main():
             ## 1) Read current state / state updated by the opponent move
             try: current_state = s.get_state()
             except TypeError: pass # if loses can't read
-            b = Board(state=current_state)
-            
-            # Memorize opponent move
-            boards_history.append(b) 
+            b = Board(current_state)
 
             # if VERBOSE : print(f"Current table:\n{current_state}")
             if VERBOSE : 
@@ -94,15 +95,11 @@ def main():
                     match TYPE:
                         case "search-algorithm" :
                             n = Node(b)  
-                            
-                            match SEARCH_TYPE:
-                                case "random" : 
-                                    (from_x, from_y), (to_x, to_y) = n.random_search()
-                                case "alpha_beta_cut" : 
-                                    score , ((from_x, from_y), (to_x, to_y)), nodes_explored = n.minimax_alpha_beta(depth=1)
-                                    print(f"Score = {score}")
-                                case _ :
-                                    raise Exception("Search strategy not implemented yet")
+                            score, move = n.minimax_alpha_beta(
+                                maximizing_player=(color=="WHITE"),
+                                h_flag=h_flag,
+                                depth=3
+                            )
                         case "genetic-algorithm" :
                             move = ...
                             pass
@@ -140,10 +137,8 @@ def main():
                     
                     ## 4) Read the new updated state after my move
                     current_state = s.get_state()
-                    b = Board(state=current_state)
                     
                     # memorize my move
-                    boards_history.append(b) 
                     if VERBOSE : 
                         print(f"After my move:\n")
                         b.pretty_print()

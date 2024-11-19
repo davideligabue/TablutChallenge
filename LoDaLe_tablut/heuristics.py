@@ -1,17 +1,18 @@
 import math
-from board import *
-import numpy as np
+from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
+from utils import cells_on_line
 
+def heuristic_1(state: Board) -> int:
+    pass
 
-#### I WILL RECIVE ############################################################################
-# - il metodo segment occupation e ring occupation devono ritornare anche: camps ed escapes (non prioritari)
-# - 'C' = CAMP, 'E' = EMPTY, 'S' = ESCAPE, 'B' = BLACK, 'W' = WHITE
-# - il metodo highlight_covered_escapes che restituisce le caselle a partire dalle escapes che sono libere (prima di incontrare ostacoli o pedine nere) 
-#   (quindi potenzialmente occupabili da pedoni bianchi). Restituisce un np.array contenente le tuple delle celle desiderate.
-###############################################################################################
+def heuristic_2(state: Board) -> int:
+    pass
 
-def grey_heuristic(board: Board) -> int:
-    '''
+def heuristic_3(state: Board) -> int:
+    pass
+
+def grey_heuristic(state: Board) -> int:
+    ''' 
     MAX = white
 
     MIN = black
