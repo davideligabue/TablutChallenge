@@ -1,5 +1,5 @@
 import math
-from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
+from board import *
 import numpy as np
 
 
@@ -10,14 +10,12 @@ import numpy as np
 #   (quindi potenzialmente occupabili da pedoni bianchi). Restituisce un np.array contenente le tuple delle celle desiderate.
 ###############################################################################################
 
-def grey_heuristic(node) -> int:
+def grey_heuristic(board: Board) -> int:
     '''
     MAX = white
 
     MIN = black
     '''
-
-    board = node.board
 
     ### ALL VARIABLES ##################################################################################################################
     king_pos = None                     # 1. Check if the player has won or lost
@@ -39,16 +37,18 @@ def grey_heuristic(node) -> int:
 
 
     ### CHECK THE TABLE ###################################################################################################
-    num_whites = board.get_all_pieces_of_color(WHITE)
-    num_blacks = board.get_all_pieces_of_color(BLACK)
+    whites = board.get_all_pieces_of_color(WHITE)
+    blacks = board.get_all_pieces_of_color(BLACK)
+    num_whites = len(whites)
+    num_blacks = len(blacks)
     king_pos = board.get_king()
 
-    values_in_covered_escapes = board[ROMBUS_POS[:, 0], ROMBUS_POS[:, 1]]
-    values_in_double_covered_escapes = board[ESCAPE_COVER[:, 0], ESCAPE_COVER[:, 1]]
-    values_in_rombus = board[DOUBLE_ESCAPE_COVER[:, 0], DOUBLE_ESCAPE_COVER[:, 1]]
-    num_rombus_pos = np.sum(values_in_rombus == 'B')
-    num_covered_escapes = np.sum(values_in_covered_escapes == 'B')
-    num_double_covered_escapes = np.sum(values_in_double_covered_escapes == 'B')
+    intersection_rombus = np.isin(num_blacks, ROMBUS_POS).all(axis=1)
+    num_rombus_pos = np.sum(intersection_rombus)
+    intersection_covered_escapes = np.isin(num_blacks, ESCAPE_COVER).all(axis=1)
+    num_covered_escapes = np.sum(intersection_covered_escapes)
+    intersection_double_covered_escapes = np.isin(num_blacks, DOUBLE_ESCAPE_COVER).all(axis=1)
+    num_double_covered_escapes = np.sum(intersection_double_covered_escapes)
     ########################################################################################################################
 
 
@@ -85,7 +85,7 @@ def grey_heuristic(node) -> int:
                 elif car == 'W':
                     possible_protection += 1
                     break
-    # Check the clomn and the row near the king
+    # Check the column and the row near the king
     for i in range(8):
         column_check = board.segment_occupation(checking_start[i%2], temp_arrive)["str"]
         for car in column_check:
