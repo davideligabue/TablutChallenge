@@ -6,8 +6,8 @@ WHITE = "WHITE"
 BLACK = "BLACK"
 KING = "KING"
 EMPTY = "EMPTY"
-CAMP = "C"
-ESCAPE = "S"
+CAMP = "CAMP"
+ESCAPE = "S-ESCAPE"
 
 CASTLE = (4, 4)
 
@@ -17,7 +17,7 @@ CAMPS = {
     "left" : [(3,0), (4,0), (5,0), (4,1)],     # left camps
     "right" : [(3,8), (4,8), (5,8), (4,7)]      # right camps
 }
-CAMPS["all"] = CAMPS["upper"] + CAMPS["lower"] + CAMPS["left"] + CAMPS["right"]
+CAMPS["all"] = np.array(CAMPS["upper"] + CAMPS["lower"] + CAMPS["left"] + CAMPS["right"])
 
 ESCAPES = {   
     "up-left" : [(0,1), (0,2), (1,0), (2,0)],     # upper-left escapes
@@ -25,7 +25,7 @@ ESCAPES = {
     "low-right" : [(8,6), (8,7), (6,8), (7,8)],     # lower-right escapes
     "up-right" : [(0,6), (0,7), (1,8), (2,8)]      # upper-right escapes
 }
-ESCAPES["all"] = ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"]
+ESCAPES["all"] = np.array( ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"] )
 
 ROMBUS_POS = [
             (1,2),       (1,6),
@@ -52,50 +52,9 @@ DOUBLE_ESCAPE_COVER = [
 ]
 DOUBLE_ESCAPE_COVER = np.array(DOUBLE_ESCAPE_COVER)
 
-'''
-STATE (initial) :
-
-{
-    'board': 
-        array([
-            ['EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY'],
-            ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-            ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-            ['BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
-            ['BLACK', 'BLACK', 'WHITE', 'WHITE', 'KING', 'WHITE', 'WHITE', 'BLACK', 'BLACK'],
-            ['BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
-            ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-            ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
-            ['EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY']
-        ], dtype='<U5'), 
-    'turn': 
-        'WHITE'
-}
-
-REPRESENTED AS:
-
-    A   B   C   D   E   F   G   H   I
-  +---+---+---+---+---+---+---+---+---+
- 1    |   |   | B | B | B |   |   |   |
-  +---+---+---+---+---+---+---+---+---+
- 2    |   |   |   | B |   |   |   |   |
-  +---+---+---+---+---+---+---+---+---+
- 3    |   |   |   | W |   |   |   |   |
-  +---+---+---+---+---+---+---+---+---+
- 4  B |   |   |   | W |   |   |   | B |
-  +---+---+---+---+---+---+---+---+---+
- 5  B | B | W | W | K | W | W | B | B |
-  +---+---+---+---+---+---+---+---+---+
- 6  B |   |   |   | W |   |   |   | B |
-  +---+---+---+---+---+---+---+---+---+
- 7    |   |   |   | W |   |   |   |   |
-  +---+---+---+---+---+---+---+---+---+
- 8    |   |   |   | B |   |   |   |   |
-  +---+---+---+---+---+---+---+---+---+
- 9    |   |   | B | B | B |   |   |   |
-  +---+---+---+---+---+---+---+---+---+
-
-'''
+##
+## Move class incapsulates a single move in the Board
+##
 
 class Move:
     def __init__(self, start:tuple, end:tuple, piece, is_capture = False):
@@ -122,6 +81,28 @@ class Move:
     
     def is_orthogonal(self):
         return (self.start[0] == self.end[0]) or (self.start[1] == self.end[1])
+    
+    # returns a tuple in the format of (from_alfanum, to_alfanum)
+    def to_alfanum_tuple(self) -> tuple:
+        row_start, col_start = self.start
+        row_end, col_end = self.end
+        alfnum_start = chr(ord('a') + col_start)
+        alfnum_start += str(1+row_start)
+        alfnum_end = chr(ord('a') + col_end)
+        alfnum_end += str(1+row_end)
+        if self.piece == WHITE or self.piece == KING:
+            color = "WHITE"
+        else:
+            color = "BLACK"
+        return (alfnum_start, alfnum_end, color)
+    
+    def __str__(self):
+        return f'Move {self.piece} : from({self.start}) -> to({self.end})'
+    
+##
+## Board class serves as a domain representation for the Tablut game. It can operate on the grid following the
+## the rules described in the Tablut Challenge pdf
+##
 
 class Board:
 
@@ -145,15 +126,6 @@ class Board:
         if (piece_one == WHITE and piece_two == KING) or (piece_one == KING and piece_two == WHITE):
             return False
         if piece_one != piece_two:
-            return True
-        return False
-
-    # controlla se una casella è speciale ?? non capisco perchè dovrebbe interessare se è speciale senza distinguere castle o camps
-    def is_special_tile(self, pos):
-        # Castle and camp positions are pre-defined (as constants or in the board setup)
-        if (pos[0], pos[1]) == CASTLE["all"]:
-            return True
-        if (pos[0], pos[1]) in CAMPS["all"]:
             return True
         return False
     

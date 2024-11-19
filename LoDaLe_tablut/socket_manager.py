@@ -2,7 +2,6 @@ import socket
 import json
 import struct
 import numpy as np
-import sys
 
 class SocketManager:
     

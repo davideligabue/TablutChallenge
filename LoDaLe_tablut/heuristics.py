@@ -1,6 +1,4 @@
-import math
-from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
-from utils import cells_on_line
+from board import *
 
 def heuristic_1(state: Board) -> int:
     pass
@@ -11,7 +9,7 @@ def heuristic_2(state: Board) -> int:
 def heuristic_3(state: Board) -> int:
     pass
 
-def grey_heuristic(state: Board) -> int:
+def grey_heuristic(board: Board) -> int:
     ''' 
     MAX = white
 
@@ -55,7 +53,7 @@ def grey_heuristic(state: Board) -> int:
 
 
     # If the king got captured ==> white lost
-    if not king_pos:
+    if board.is_king_captured():
         return -float('inf')
 
 
@@ -63,9 +61,9 @@ def grey_heuristic(state: Board) -> int:
     ### CHECK ALL AROUND THE KING ###########################################################################################
     king_ring = board.ring_occupation(king_pos, 1)["str"]
     for i in range(4):
-        if king_ring[i*2] == 'W':
+        if king_ring[i*2] == WHITE[0]:
             surrounding_protection += 1
-        if king_ring[i*2] == 'B' or king_ring[i*2] == 'C':
+        if king_ring[i*2] == BLACK[0] or king_ring[i*2] == CAMP[0]:
             surrounding_threats += 1
 
     king_x, king_y = king_pos
@@ -75,28 +73,28 @@ def grey_heuristic(state: Board) -> int:
     # Check the column and the row of the king
     for i in range(4):
         column_check = board.segment_occupation(king_pos, checking_arrive[i])["str"]
-        if column_check[-1] == 'S' and (all(c == 'E' for c in column_check[:-1]) or len(column_check) == 1):
+        if column_check[-1] == ESCAPE[0] and (all(c == EMPTY[0] for c in column_check[:-1]) or len(column_check) == 1):
             free_routes_to_escapes += 1
         else:
             for car in column_check:
-                if car == 'B':
+                if car == BLACK[0]:
                     possible_checkers += 1
                     possible_threats += 1
                     break
-                elif car == 'W':
+                elif car == WHITE[0]:
                     possible_protection += 1
                     break
     # Check the column and the row near the king
     for i in range(8):
         column_check = board.segment_occupation(checking_start[i%2], temp_arrive)["str"]
         for car in column_check:
-            if car == 'B':
+            if car == BLACK[0]:
                 possible_checkers += 1
                 break
-            elif car == 'W':
+            elif car == WHITE[0]:
                 possible_protection += 1
                 break
-            elif car == 'S' or car == 'C':
+            elif car == ESCAPE[0] or car == CAMP[0]:
                 break
     #############################################################################################################################
 

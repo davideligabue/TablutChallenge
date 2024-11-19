@@ -1,10 +1,7 @@
-from typing import List, Optional, Callable, Tuple
+from typing import List, Tuple
 from board import Board, Move
-import random
 from utils import *
-from collections import deque
 from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3
-import math
 
 VERBOSE = True
 

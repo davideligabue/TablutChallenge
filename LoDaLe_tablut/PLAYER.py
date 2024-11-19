@@ -4,8 +4,6 @@ from socket_manager import SocketManager
 from board import Board
 from utils import *
 from search import Node
-from heuristics import grey_heuristic
-import numpy as np
 import traceback
 
 PORT = {"WHITE":5800, "BLACK":5801}
@@ -13,12 +11,7 @@ PORT = {"WHITE":5800, "BLACK":5801}
 H_FLAGS = ["grey", "1", "2", "3"]
 
 VERBOSE = True      # quickly enable/disable verbose
-
-TYPE = "search-algorithm" # TODO: rimuovere se non usiamo altro
-# TYPE = "machine-learning"
-# TYPE = "genetic-algorithm"
-
-SEARCH_TYPE = "alpha_beta_cut"               
+              
 
 def main():
     
@@ -55,93 +48,56 @@ def main():
         sys.exit(1)
     
     ## Initialize the socket ##
-    s = SocketManager(ip, port)
-    s.create_socket()
-    s.connect()
+    sock = SocketManager(ip, port)
+    sock.create_socket()
+    sock.connect()
     
     ###############################################################################
     ### GAME CYCLE ################################################################
     ###############################################################################
-        
-    # Useful vars
-    if TYPE == "machine-learning" : 
-        dataset_path = "../dataset"
-        dataset = np.load(dataset_path + "/dataset_moves.npy", allow_pickle=True)
-        results = np.load(dataset_path + "/dataset_results.npy", allow_pickle=True)
-        n = 0
     
     try:
         while True:
             initial_time = time.time()
             
             ## 1) Read current state / state updated by the opponent move
-            try: current_state = s.get_state()
+            try: current_state = sock.get_state()
             except TypeError: pass # if loses can't read
-            b = Board(current_state)
+            board = Board(current_state)
 
             # if VERBOSE : print(f"Current table:\n{current_state}")
             if VERBOSE : 
                 print(f"Current table:\n")
-                b.pretty_print()
+                board.pretty_print()
 
             # If we are still playing
             match current_state["turn"] :
                 case  _ if current_state["turn"] == color:
-                    if VERBOSE : print("It's your turn")
+                    if VERBOSE : print("It'sock your turn")
 
                     ## 2) Compute the move
                     timeout = timeout - (time.time() - initial_time) # consider initialization time   
                     
-                    match TYPE:
-                        case "search-algorithm" :
-                            n = Node(b)  
-                            score, move = n.minimax_alpha_beta(
+                    n = Node(board)  
+                    score, move = n.minimax_alpha_beta(
                                 maximizing_player=(color=="WHITE"),
                                 h_flag=h_flag,
                                 depth=3
                             )
-                        case "genetic-algorithm" :
-                            move = ...
-                            pass
-                        case "machine-learning" :
-                            idx_moves = 0
-                            moves = get_n_most_winning_move(dataset, results, n, color)
-                            
-                            move = moves[idx_moves][0]
-                            from_x, from_y = alfnum2tuple(move[0])
-                            to_x, to_y = alfnum2tuple(move[1])
-                            
-                            while not b.is_valid_move(from_x, from_y, to_x, to_y, b.board[from_x][from_y]) :
-                                idx_moves += 1
-                                if idx_moves>=len(moves):
-                                    move = Node(b).random_search()  # random move if he can't find anything     # TODO: can do better
-                                    (from_x, from_y), (to_x, to_y) = move
-                                else :
-                                    move = moves[idx_moves][0]
-                                    from_x, from_y = alfnum2tuple(move[0])
-                                    to_x, to_y = alfnum2tuple(move[1])
-                                    
-                            n += 1
-                            
-                    # Translate the move
-                    _from = tuple2alfanum((from_x, from_y))
-                    _to = tuple2alfanum((to_x, to_y))
-                    move = (_from, _to, color)
-                    
+
                     if VERBOSE : 
-                        print(f"Move: {move}")
-                        print(f"{b.board[from_x][from_y]} ({from_x,from_y}) --> {b.board[to_x][to_y]}({to_x,to_y})")
-                    
+                        print(move)
+
                     ## 3) Send the move
-                    s.send_move(move)
+                    sock.send_move(move.to_alfanum_tuple())
                     
                     ## 4) Read the new updated state after my move
-                    current_state = s.get_state()
+                    current_state = sock.get_state()
                     
                     # memorize my move
                     if VERBOSE : 
                         print(f"After my move:\n")
-                        b.pretty_print()
+                        board.pretty_print()
                         
                 case "WHITEWIN":
                     if VERBOSE : print("WHITE wins!")
@@ -152,7 +108,7 @@ def main():
                     sys.exit(0)
                     
                 case "DRAW":
-                    if VERBOSE : print("It's a draw!")
+                    if VERBOSE : print("It'sock a draw!")
                     sys.exit(0)
                     
                 case _ :
