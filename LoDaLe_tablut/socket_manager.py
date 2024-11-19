@@ -14,6 +14,7 @@ class SocketManager:
     def create_socket(self):
         try:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.setblocking(1)
         except socket.error as e:
             print(f"Error while creating the socket: {e}")
             self._sock = None
@@ -60,6 +61,7 @@ class SocketManager:
         '''
         len_bytes = struct.unpack('>i', self.recvall(4))[0]
         current_state_server_bytes = self._sock.recv(len_bytes)
+        print("Ricevuti ", len(current_state_server_bytes))
 
         # Converting byte into json
         json_current_state_server = json.loads(current_state_server_bytes) 

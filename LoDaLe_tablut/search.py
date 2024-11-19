@@ -69,7 +69,7 @@ class Node:
                 case "2" : heuristic = heuristic_2
                 case "3" : heuristic = heuristic_3
                 case "grey" : heuristic = grey_heuristic
-            return heuristic(self), None  
+            return heuristic(self.board), None  
 
         max_eval = -float('inf')
         min_eval = float('inf')

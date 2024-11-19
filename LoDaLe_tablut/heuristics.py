@@ -42,11 +42,11 @@ def grey_heuristic(board: Board) -> int:
     num_blacks = len(blacks)
     king_pos = board.get_king()
 
-    intersection_rombus = np.isin(num_blacks, ROMBUS_POS).all(axis=1)
+    intersection_rombus = np.isin(num_blacks, ROMBUS_POS).all(axis=0)
     num_rombus_pos = np.sum(intersection_rombus)
-    intersection_covered_escapes = np.isin(num_blacks, ESCAPE_COVER).all(axis=1)
+    intersection_covered_escapes = np.isin(num_blacks, ESCAPE_COVER).all(axis=0)
     num_covered_escapes = np.sum(intersection_covered_escapes)
-    intersection_double_covered_escapes = np.isin(num_blacks, DOUBLE_ESCAPE_COVER).all(axis=1)
+    intersection_double_covered_escapes = np.isin(num_blacks, DOUBLE_ESCAPE_COVER).all(axis=0)
     num_double_covered_escapes = np.sum(intersection_double_covered_escapes)
     ########################################################################################################################
 
@@ -86,7 +86,7 @@ def grey_heuristic(board: Board) -> int:
                     break
     # Check the column and the row near the king
     for i in range(8):
-        column_check = board.segment_occupation(checking_start[i%2], temp_arrive)["str"]
+        column_check = board.segment_occupation(checking_start[i%2], temp_arrive[i%2])["str"]
         for car in column_check:
             if car == BLACK[0]:
                 possible_checkers += 1
