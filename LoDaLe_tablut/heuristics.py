@@ -1,5 +1,5 @@
 import math
-from board import Board, ESCAPES, CAMPS, ROMBUS_POS, DOUBLE_ESCAPE_COVER, ESCAPE_COVER
+from board import *
 import numpy as np
 
 
@@ -10,14 +10,12 @@ import numpy as np
 #   (quindi potenzialmente occupabili da pedoni bianchi). Restituisce un np.array contenente le tuple delle celle desiderate.
 ###############################################################################################
 
-def grey_heuristic(node) -> int:
+def grey_heuristic(board: Board) -> int:
     '''
     MAX = white
 
     MIN = black
     '''
-
-    board = node.board
 
     ### ALL VARIABLES ##################################################################################################################
     king_pos = None                     # 1. Check if the player has won or lost
