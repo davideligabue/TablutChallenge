@@ -27,28 +27,30 @@ ESCAPES = {
 }
 ESCAPES["all"] = ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"]
 
-ROMBUS_POS = { 
+ROMBUS_POS = [
             (1,2),       (1,6),
     (2,1),                      (2,7),
 
     (6,1),                      (6,7),
             (7,2),       (7,6)
-}
+]
+ROMBUS_POS = np.array(ROMBUS_POS)
 
-ESCAPE_COVER = {
+ESCAPE_COVER = [
     (1,1),(1,2),        (1,6),(1,7),
     (2,1),                    (2,7),
 
     (6,1),                    (6,7),
     (7,1),(7,2),        (7,6),(7,7)
-}
+]
+ESCAPE_COVER = np.array(ESCAPE_COVER)
 
-DOUBLE_ESCAPE_COVER = {
+DOUBLE_ESCAPE_COVER = [
     (1,1),          (1,7),
 
     (7,1),          (7,7)
-}
-
+]
+DOUBLE_ESCAPE_COVER = np.array(DOUBLE_ESCAPE_COVER)
 
 '''
 STATE (initial) :
