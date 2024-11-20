@@ -68,7 +68,7 @@ class Move:
             self.start = start
             self.end = end
         else:
-            raise Exception("'Move' class detected non valid x,y position")
+            raise Exception(f"'Move' class detected non valid x,y position : {start} --> {end}")
         if not self.is_orthogonal():
             raise Exception("'Move' class detected non orthogonal move")
         if piece == WHITE or piece == BLACK or piece == KING:
@@ -157,7 +157,7 @@ class Board:
             step = sign
             if step == 0:
                 step = 1
-            for i in range( sign, delta[1]+sign, step ):
+            for i in range( sign, delta[1]*sign, step ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 letter = self.get_cell((pos1[0], pos1[1]+i))[0]
                 str_result += letter
@@ -168,7 +168,7 @@ class Board:
             step = sign
             if step == 0:
                 step = 1
-            for i in range( sign, delta[0]+sign, step ):
+            for i in range( sign, delta[0]*sign, step ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 letter = self.get_cell((pos1[0]+i, pos1[1]))[0]
                 str_result += letter
@@ -277,7 +277,7 @@ class Board:
         if piece == EMPTY or piece == CAMP or piece == ESCAPE:
             raise Exception("Empty piece when calling 'get_all_moves_for_piece'")
         # coordinates of all the cells on the border of the grid moving orthogonally
-        borders = [(pos[0], 0), (9, pos[1]), (pos[0], 9), (0, pos[1])]
+        borders = [(pos[0], 0), (8, pos[1]), (pos[0], 8), (0, pos[1])]
         segment_occupations = [self.segment_occupation(pos, borders[0]), 
                                self.segment_occupation(pos, borders[1]),
                                self.segment_occupation(pos, borders[2]),
@@ -286,6 +286,8 @@ class Board:
         for direction in segment_occupations:
             for i in range(len(direction["str"])):
                 if direction["str"][i] == BLACK[0] or direction["str"][i] == WHITE[0] or direction["str"][i] == KING[0]:
+                    if i==3 : 
+                        print(direction)
                     break
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):
