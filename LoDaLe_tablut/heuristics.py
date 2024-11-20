@@ -29,7 +29,7 @@ def grey_heuristic(board: Board) -> int:
     num_covered_escapes = 0             # 10. The black may tend to cover the escapes
     num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
     # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
-    # white_covers_escape = 0             # 12. Escapes which are covered first by a white
+    # white_covers_escape = 0           # 12. Escapes which are covered first by a white
     num_whites = 0                      # 13. The number of whites
     num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
@@ -42,11 +42,11 @@ def grey_heuristic(board: Board) -> int:
     num_blacks = len(blacks)
     king_pos = board.get_king()
 
-    intersection_rombus = np.isin(num_blacks, ROMBUS_POS).all(axis=0)
+    intersection_rombus = np.isin(blacks, ROMBUS_POS).all(axis=1)
     num_rombus_pos = np.sum(intersection_rombus)
-    intersection_covered_escapes = np.isin(num_blacks, ESCAPE_COVER).all(axis=0)
+    intersection_covered_escapes = np.isin(blacks, ESCAPE_COVER).all(axis=1)
     num_covered_escapes = np.sum(intersection_covered_escapes)
-    intersection_double_covered_escapes = np.isin(num_blacks, DOUBLE_ESCAPE_COVER).all(axis=0)
+    intersection_double_covered_escapes = np.isin(blacks, DOUBLE_ESCAPE_COVER).all(axis=1)
     num_double_covered_escapes = np.sum(intersection_double_covered_escapes)
     ########################################################################################################################
 
@@ -86,7 +86,7 @@ def grey_heuristic(board: Board) -> int:
                     break
     # Check the column and the row near the king
     for i in range(8):
-        column_check = board.segment_occupation(checking_start[i%2], temp_arrive[i%2])["str"]
+        column_check = board.segment_occupation(checking_start[i%2], temp_arrive[i])["str"]
         for car in column_check:
             if car == BLACK[0]:
                 possible_checkers += 1
