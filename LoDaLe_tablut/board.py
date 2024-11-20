@@ -214,6 +214,9 @@ class Board:
         # if a black piece is outside a camp it cannot re-enter
         if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
             return False
+        # if the end position is occupied
+        if move.end == BLACK or move.end == WHITE or move.end == KING:
+            return False
         return True
     
     def is_king_escaped(self):
@@ -286,8 +289,6 @@ class Board:
         for direction in segment_occupations:
             for i in range(len(direction["str"])):
                 if direction["str"][i] == BLACK[0] or direction["str"][i] == WHITE[0] or direction["str"][i] == KING[0]:
-                    if i==3 : 
-                        print(direction)
                     break
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):
