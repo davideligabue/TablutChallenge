@@ -283,8 +283,7 @@ class Board:
         result = []
         for direction in segment_occupations:
             for i in range(len(direction["str"])):
-                if direction["str"][i] != EMPTY[0] and direction["str"][i] != CAMP[0] \
-                and direction["str"][i] != ESCAPE[0]:
+                if direction["str"][i] == BLACK[0] or direction["str"][i] == WHITE[0] or direction["str"][i] == KING[0]:
                     break
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):
