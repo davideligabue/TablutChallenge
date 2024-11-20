@@ -97,7 +97,9 @@ class Move:
         return (alfnum_start, alfnum_end, color)
     
     def __str__(self):
-        return f'Move {self.piece} : from({self.start}) -> to({self.end})'
+        # num = f'Move {self.piece} : from({self.start[0]}, {self.start[0]}) -> to({self.end[0]}, {self.end[0]})'
+        start, end, _ = self.to_alfanum_tuple() 
+        return f'Move {self.piece} : {start} --> {end}'
     
 ##
 ## Board class serves as a domain representation for the Tablut game. It can operate on the grid following the
