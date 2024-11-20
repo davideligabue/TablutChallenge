@@ -5,6 +5,7 @@ from board import Board
 from utils import *
 from search import Node
 import traceback
+from timer_procedures import TimerProc
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
@@ -51,6 +52,8 @@ def main():
     sock = SocketManager(ip, port)
     sock.create_socket()
     sock.connect()
+
+    timer = TimerProc("TimerProva", "descrizione")
     
     ###############################################################################
     ### GAME CYCLE ################################################################
@@ -78,12 +81,16 @@ def main():
                     ## 2) Compute the move
                     timeout = timeout - (time.time() - initial_time) # consider initialization time   
                     
+                    timer.start("best_move_search")
+
                     n = Node(board)  
                     score, move = n.minimax_alpha_beta(
                                 maximizing_player=(color=="WHITE"),
                                 h_flag=h_flag,
                                 depth=3
                             )
+                    
+                    print(timer.end("best_move_search"))
 
                     if VERBOSE : 
                         print(move)
@@ -101,14 +108,17 @@ def main():
                         
                 case "WHITEWIN":
                     if VERBOSE : print("WHITE wins!")
+                    print(timer)
                     sys.exit(0)
                     
                 case "BLACKWIN":
                     if VERBOSE : print("BLACK wins!")
+                    print(timer)
                     sys.exit(0)
                     
                 case "DRAW":
-                    if VERBOSE : print("It'sock a draw!")
+                    if VERBOSE : print("It's a draw!")
+                    print(timer)
                     sys.exit(0)
                     
                 case _ :
