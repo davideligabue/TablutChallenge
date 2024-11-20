@@ -72,7 +72,7 @@ def main():
 
             # If we are still playing
             match current_state["turn"] :
-                case  _ if current_state["turn"] == color:
+                case _ if current_state["turn"] == color:
                     if VERBOSE : print("It'sock your turn")
 
                     ## 2) Compute the move

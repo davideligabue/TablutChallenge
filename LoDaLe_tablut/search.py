@@ -74,6 +74,7 @@ class Node:
         max_eval = -float('inf')
         min_eval = float('inf')
         for child in self.get_children(color):
+            print(maximizing_player, alpha, beta)
             eval, move = child.minimax_alpha_beta(
                 maximizing_player=not maximizing_player,
                 h_flag=h_flag, 
@@ -81,16 +82,17 @@ class Node:
                 alpha=alpha, 
                 beta=beta
             )
+            
             if maximizing_player:
                 if eval > max_eval:
                     max_eval = eval
-                    best_move = move  
+                    best_move = child.state[-1]  
                 alpha = max(alpha, eval)
                 res_eval = max_eval
             else :
                 if eval < min_eval:
                     min_eval = eval
-                    best_move = move  
+                    best_move = child.state[-1]  
                 beta = min(beta, eval)
                 res_eval = min_eval
             if beta <= alpha:
