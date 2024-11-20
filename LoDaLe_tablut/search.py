@@ -74,7 +74,6 @@ class Node:
         max_eval = -float('inf')
         min_eval = float('inf')
         for child in self.get_children(color):
-            print(maximizing_player, alpha, beta)
             eval, move = child.minimax_alpha_beta(
                 maximizing_player=not maximizing_player,
                 h_flag=h_flag, 

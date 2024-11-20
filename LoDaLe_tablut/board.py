@@ -84,8 +84,8 @@ class Move:
     
     # returns a tuple in the format of (from_alfanum, to_alfanum)
     def to_alfanum_tuple(self) -> tuple:
-        row_start, col_start = self.start
-        row_end, col_end = self.end
+        col_start, row_start  = self.start
+        col_end, row_end = self.end
         alfnum_start = chr(ord('a') + col_start)
         alfnum_start += str(1+row_start)
         alfnum_end = chr(ord('a') + col_end)
@@ -97,7 +97,6 @@ class Move:
         return (alfnum_start, alfnum_end, color)
     
     def __str__(self):
-        # num = f'Move {self.piece} : from({self.start[0]}, {self.start[0]}) -> to({self.end[0]}, {self.end[0]})'
         start, end, _ = self.to_alfanum_tuple() 
         return f'Move {self.piece} : {start} --> {end}'
     
@@ -213,9 +212,6 @@ class Board:
             return False
         # if a black piece is outside a camp it cannot re-enter
         if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
-            return False
-        # if the end position is occupied
-        if move.end == BLACK or move.end == WHITE or move.end == KING:
             return False
         return True
     
@@ -351,7 +347,6 @@ class Board:
     def get_king(self):
         return self.king
 
-    
     def pretty_print(self):
         board = np.transpose(self.board)
         n = board.shape[0]
