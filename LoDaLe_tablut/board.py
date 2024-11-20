@@ -17,7 +17,7 @@ CAMPS = {
     "left" : [(3,0), (4,0), (5,0), (4,1)],     # left camps
     "right" : [(3,8), (4,8), (5,8), (4,7)]      # right camps
 }
-CAMPS["all"] = np.array(CAMPS["upper"] + CAMPS["lower"] + CAMPS["left"] + CAMPS["right"])
+CAMPS["all"] = CAMPS["upper"] + CAMPS["lower"] + CAMPS["left"] + CAMPS["right"]
 
 ESCAPES = {   
     "up-left" : [(0,1), (0,2), (1,0), (2,0)],     # upper-left escapes
@@ -25,7 +25,7 @@ ESCAPES = {
     "low-right" : [(8,6), (8,7), (6,8), (7,8)],     # lower-right escapes
     "up-right" : [(0,6), (0,7), (1,8), (2,8)]      # upper-right escapes
 }
-ESCAPES["all"] = np.array( ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"] )
+ESCAPES["all"] = ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"] 
 
 ROMBUS_POS = [
             (1,2),       (1,6),
@@ -136,9 +136,9 @@ class Board:
             cell = self.board[pos[0]][pos[1]]
             if cell == EMPTY:
                 if pos in CAMPS["all"]:
-                    return CAMP
+                    cell = CAMP
                 elif pos in ESCAPES["all"]:
-                    return ESCAPE
+                    cell = ESCAPE
             return cell
         else:
             return "-"
@@ -157,7 +157,7 @@ class Board:
             step = sign
             if step == 0:
                 step = 1
-            for i in range( sign, delta[1]*sign, step ):
+            for i in range( sign, delta[1]+sign, step ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 letter = self.get_cell((pos1[0], pos1[1]+i))[0]
                 str_result += letter
@@ -168,7 +168,7 @@ class Board:
             step = sign
             if step == 0:
                 step = 1
-            for i in range( sign, delta[0]*sign, step ):
+            for i in range( sign, delta[0]+sign, step ):
                 # get the frist letter of each cell in the path of the segment B for black W for white E for empty K for king
                 letter = self.get_cell((pos1[0]+i, pos1[1]))[0]
                 str_result += letter
