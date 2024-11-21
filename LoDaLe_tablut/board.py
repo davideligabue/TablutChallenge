@@ -12,20 +12,20 @@ ESCAPE = "S-ESCAPE"
 CASTLE = (4, 4)
 
 CAMPS = {   
-    "upper" : [(0,3), (0,4), (0,5), (1,4)],     # upper camps
-    "lower" : [(8,3), (8,4), (8,5), (7,4)],     # lower camps
+    "up" : [(0,3), (0,4), (0,5), (1,4)],     # upper camps
+    "down" : [(8,3), (8,4), (8,5), (7,4)],     # lower camps
     "left" : [(3,0), (4,0), (5,0), (4,1)],     # left camps
     "right" : [(3,8), (4,8), (5,8), (4,7)]      # right camps
 }
-CAMPS["all"] = CAMPS["upper"] + CAMPS["lower"] + CAMPS["left"] + CAMPS["right"]
+CAMPS["all"] = CAMPS["up"] + CAMPS["down"] + CAMPS["left"] + CAMPS["right"]
 
 ESCAPES = {   
-    "up-left" : [(0,1), (0,2), (1,0), (2,0)],     # upper-left escapes
-    "low-left" : [(6,0), (7,0), (8,1), (8,2)],     # lower-left escapes
-    "low-right" : [(8,6), (8,7), (6,8), (7,8)],     # lower-right escapes
-    "up-right" : [(0,6), (0,7), (1,8), (2,8)]      # upper-right escapes
+    "up" : [(1,0), (2,0), (6,0), (7,0)],
+    "right" : [(8,1), (8,2), (8,6), (8,7)],
+    "down" : [(1,8),(2,8),(6,8),(7,8)],
+    "left" : [(0,1),(0,2),(0,6),(0,7)]
 }
-ESCAPES["all"] = ESCAPES["up-left"] + ESCAPES["low-left"] + ESCAPES["low-right"] + ESCAPES["up-right"] 
+ESCAPES["all"] = ESCAPES["up"] + ESCAPES["right"] + ESCAPES["down"] + ESCAPES["left"] 
 
 ROMBUS_POS = [
             (1,2),       (1,6),
@@ -290,6 +290,24 @@ class Board:
                 if self.is_valid_move(move):
                     result.append(move)
         return result
+    
+    # it calculates all the free ways towards all the escapes, and it returns a list with all the cells part of those escape ways
+    def get_highlighted_escape_cells(self):
+        # distinguish the computation for each side of escapes (up, right, bottom, left)
+        directions = [(0,1),(-1,0),(0,-1),(1,0)]
+        result = []
+        # pair a direction vector for each side of ESCAPES
+        for vector, escapes in zip(directions, ESCAPES):
+            escapes = ESCAPES[escapes] # get escapes list of that side
+            for escape in escapes: # for each escape check the stright direction (according to the vector direction)
+                check_pos = (escape[0] + vector[0], escape[1] + vector[1]) # start from that escape
+                # check until you reach a black or a camp. For a king it's important to highlight the cells even if they trespass a WHITE
+                while self.get_cell(check_pos) != BLACK and self.get_cell(check_pos) != CAMP:
+                    result.append(check_pos) # add that position
+                    check_pos = (check_pos[0] + vector[0], check_pos[1] + vector[1]) # move toward vector direction
+        return result
+
+
     
     # given a list of Move, it applies them in order (the moves are supposed to be altready legal)
     def apply_moves(self, moves_list:list):

@@ -43,6 +43,23 @@ class TestBoard(unittest.TestCase):
             ])
         } # 8+6+12+11+9+11
         return Board(state)# BLACK ... | WHITE ..
+
+    def initialize_Board_third_case(self) -> Board:
+        state = {
+            'turn': 'WHITE',
+            'board': np.array([
+                ['EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY'],
+                ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY'],
+                ['BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
+                ['BLACK', 'EMPTY', 'WHITE', 'WHITE', 'KING', 'WHITE', 'WHITE', 'BLACK', 'BLACK'],
+                ['BLACK', 'EMPTY', 'BLACK', 'EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY']
+            ])
+        } 
+        return Board(state)
     
     def test_board_initialization(self):
         board = self.initialize_Board()
@@ -134,6 +151,11 @@ class TestBoard(unittest.TestCase):
         self.assertTrue(len(board.get_all_moves(KING, [])) == 12, "Wrong number of possible moves for king")
         self.assertTrue(len(board.get_all_moves(KING, [])) + len(board.get_all_moves(BLACK, [])) + len(board.get_all_moves(WHITE, [])) == 55, "Wrong number of possible total moves")
 
+    def test_highlighted_cells(self):
+        board = self.initialize_Board_third_case()
+        # 1,1  7,6   2,7  2,6  1,6  2,6  3,6  4,6  5,6  1,1
+        position_set_target = set([(1,1), (7,6), (2,7), (2,6), (1,6), (2,6), (3,6), (4,6), (5,6), (1,1)])
+        self.assertEqual(set(board.get_highlighted_escape_cells()), position_set_target, "Wrong highlighted escape cells")
 
         
 
