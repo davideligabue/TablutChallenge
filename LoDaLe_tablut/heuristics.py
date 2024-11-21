@@ -29,7 +29,7 @@ def grey_heuristic(board: Board) -> int:
     num_covered_escapes = 0             # 10. The black may tend to cover the escapes
     num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
     # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
-    # white_covers_escape = 0           # 12. Escapes which are covered first by a white
+    white_in_highlighted_cells = 0      # 12. Escapes which are covered first by a white
     num_whites = 0                      # 13. The number of whites
     num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
@@ -101,9 +101,10 @@ def grey_heuristic(board: Board) -> int:
 
 
     ### Check covered escapes by white ##########################################################################################
-    # highlight_space = board.highlight_covered_escapes()
-    # values_in_highlight_escapes = board[highlight_space[:, 0], highlight_space[:, 1]]
-    # white_covers_escape = np.sum(values_in_highlight_escapes == 'W')
+    highlighted_cells = board.get_highlighted_escape_cells()
+    highlighted_cells = np.array(highlighted_cells)
+    intersection_highlighted_cells = np.isin(whites, highlighted_cells).all(axis=1)
+    white_in_highlighted_cells = np.sum(intersection_highlighted_cells)
     ##############################################################################################################################
 
 
@@ -125,7 +126,7 @@ def grey_heuristic(board: Board) -> int:
     W9 = 60   # Diminuire l'effetto negativo di escape coperti
     W10 = 150 # Riduce l'enfasi su doppi escape coperti
     W11 = 10  # Bilancia il vantaggio numerico
-
+    W12 = 15  # Migliora la protezione delle escapes per i bianchi
     # Use a dict for better usability and debug
     scorings = {
 
@@ -195,7 +196,13 @@ def grey_heuristic(board: Board) -> int:
         # a winning position
         'numerical_advantage' :
             W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0
-                                            else 0
+                                            else 0,
+        
+        # The player must consider the escape protection only if he is not in
+        # a winning position
+        'escape_protection' :
+            W12 * (white_in_highlighted_cells)  if free_routes_to_escapes == 0
+                                                else 0
     }
 
     # state.pretty_print()
