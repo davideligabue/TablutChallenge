@@ -25,7 +25,7 @@ class TimerProc:
         return str(delta)
         
     def __str__(self):
-        result = f"{self.name} timer - {self.descr}\nProcedure:\t\tAverage execution time (sec):\n"
+        result = f"{self.name} timer - {self.descr}\nProcedure:\tAverage execution time (sec):\tTotal execution time (sec):\n"
         for key in self.state:
-            result += key + "\t\t" + str(np.array(self.state[key]).mean()) + "\n"
+            result += key + "\t" + str(np.array(self.state[key]).mean()) + "\t" + str(np.array(self.state[key]).sum()) + "\n"
         return result

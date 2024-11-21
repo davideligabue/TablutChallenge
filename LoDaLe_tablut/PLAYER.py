@@ -66,7 +66,7 @@ def main():
             ## 1) Read current state / state updated by the opponent move
             try: current_state = sock.get_state()
             except TypeError: pass # if loses can't read
-            board = Board(current_state)
+            board = Board(current_state, timer)
 
             # if VERBOSE : print(f"Current table:\n{current_state}")
             if VERBOSE : 
@@ -81,7 +81,7 @@ def main():
                     ## 2) Compute the move
                     timeout = timeout - (time.time() - initial_time) # consider initialization time   
                     
-                    timer.start("best_move_search")
+                    timer.start("total_search_minmax")
 
                     n = Node(board)  
                     score, move = n.minimax_alpha_beta(
@@ -90,7 +90,7 @@ def main():
                                 depth=3
                             )
                     
-                    print(timer.end("best_move_search"))
+                    timer.end("total_search_minmax")
 
                     if VERBOSE : 
                         print(move)

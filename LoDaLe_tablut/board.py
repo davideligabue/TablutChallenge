@@ -1,5 +1,6 @@
 import numpy as np
 from utils import *
+from timer_procedures import TimerProc
 
 # CONSTANTS
 WHITE = "WHITE"
@@ -107,7 +108,7 @@ class Move:
 
 class Board:
 
-    def __init__(self, state):
+    def __init__(self, state, timer:TimerProc):
         self.turn = state['turn']
         self.board = np.transpose(np.array(state['board']))
         king_pos = np.where(self.board == KING)
@@ -117,18 +118,11 @@ class Board:
             self.king = (king_pos[0][0], king_pos[1][0])
         else:
             raise Exception("More than one king in the board") 
+        self.timer = timer
     
     # controlla se la data posizione è interna alla griglia  ?? da togliere perchè aggiunto come metodo statico di classe Move
     def is_within_bounds(self, pos):
         return 0 <= pos[0] < 9 and 0 <= pos[1] < 9
-
-    # controlla se due pezzi sono di fazione diversa
-    def is_opponent_piece(self, piece_one, piece_two):
-        if (piece_one == WHITE and piece_two == KING) or (piece_one == KING and piece_two == WHITE):
-            return False
-        if piece_one != piece_two:
-            return True
-        return False
     
     def get_cell(self, pos): 
         if self.is_within_bounds(pos):
@@ -147,6 +141,7 @@ class Board:
     # in the segment (starting point not included, end point included), format example: 'bbwee...' there are two blacks, one white and two empty.
     # A cell which is not in bound is flagged in the string with '-' char 
     def segment_occupation(self, pos1, pos2) -> dict:
+        self.timer.start("segment_occupation")
         str_result = ""
         cells_result = []
         delta = (pos2[0]-pos1[0],pos2[1]-pos1[1])
@@ -172,6 +167,7 @@ class Board:
                 letter = self.get_cell((pos1[0]+i, pos1[1]))[0]
                 str_result += letter
                 cells_result.append( (pos1[0]+i, pos1[1]) )
+        self.timer.end("segment_occupation")
         return {"str":str_result, "cells":cells_result}
     
     # given a center in the grid, it returns the Summary Object for the cells in the ring (of radius 1 or 2)
@@ -179,6 +175,7 @@ class Board:
     # under the key "cells" the position tuple corresponding to the string letter.
     # A cell which is not in bound is flagged in the string with '-' char 
     def ring_occupation(self, center, radius) -> dict:
+        self.timer.start("ring_occupation")
         str_result = ""
         cell_result = []
         if radius < 1 or radius > 2:
@@ -193,6 +190,7 @@ class Board:
             str_result += occupation_obj["str"]
             for cell in occupation_obj["cells"]:
                 cell_result.append( cell )
+        self.timer.end("ring_occupation")
         return {"str": str_result, "cells": cell_result}
     
     # check whether pos1 and pos2 positions are adjacent on the grid (they have a common side)
@@ -224,6 +222,7 @@ class Board:
     # returns a tuple (True, pos) if this move brings to the capture of a piece in the 'pos' position
     # else it returns (False, xx). IT DOESN'T CHECK WHETHER IS A VALID MOVE (you should check before calling this method)
     def is_a_capture_move(self, move: Move):
+        self.timer.start("is_a_capture_move")
         # if the moving piece is black, check if it is capturing the king
         if move.piece == BLACK:
             # if the end position of the move has a king adjacent
@@ -237,9 +236,11 @@ class Board:
                         blacks_in_even_position += 1
                 # If the King is in the Castle, it must be already surrounded on 3 sides (the 4th is the end position of this move)
                 if self.king == CASTLE:
+                    self.timer.end("is_a_capture_move")
                     return (blacks_in_even_position==3, self.king)
                 # if the king is adjacent to the castle, it must be already surrounded on 2 sides (the 3rd is the end position of this move)
                 if self.is_adjacent(self.king, CASTLE):
+                    self.timer.end("is_a_capture_move")
                     return (blacks_in_even_position==2, self.king)
                 # if the end position makes the king between a black piece and a camp, it is a capture
                 # check for every even surrounding cell if the king has on opposite sides the end of this move and a camp
@@ -247,6 +248,7 @@ class Board:
                     if cell in CAMPS["all"]:
                         delta = (cell[0]-move.end[0], cell[1]-move.end[1])
                         if (delta[0] == 0 and abs(delta[1]) == 2) or (delta[1] == 0 and abs(delta[0]) == 2):
+                            self.timer.end("is_a_capture_move")
                             return (True, self.king)
         # now all the general rules for all checkers BLACK, WHITE and KING
         surround = self.ring_occupation(move.end, 1) # take the surround of the move end point
@@ -262,14 +264,18 @@ class Board:
                 delta = (move.end[0] - surround["cells"][elem][0], move.end[1] - surround["cells"][elem][1])
                 opposite_cell_coordinates = (surround["cells"][elem][0] - delta[0], surround["cells"][elem][1] - delta[1])
                 if self.get_cell(opposite_cell_coordinates) == move.piece: # it means that the cell of the adversary is between an ally and your next move, so this move is a capture
+                    self.timer.end("is_a_capture_move")
                     return (True, (surround["cells"][elem][0], surround["cells"][elem][1]))
                 # check if the opposite cell is the castle, or a camp. In this case this move is a capture
                 if opposite_cell_coordinates == CASTLE or opposite_cell_coordinates in CAMPS["all"]:
+                    self.timer.end("is_a_capture_move")
                     return (True, (surround["cells"][elem][0], surround["cells"][elem][1]))
+        self.timer.end("is_a_capture_move")
         return (False, None)
         
     # take a position on the grid and returns the list of all possible legal moves for that piece
     def get_all_moves_for_piece(self, pos):
+        self.timer.start("get_all_moves_for_piece")
         if not self.is_within_bounds(pos):
             raise Exception("Position not in the grid for 'get_all_moves_for_piece' call")
         piece = self.get_cell(pos)
@@ -289,10 +295,12 @@ class Board:
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):
                     result.append(move)
+        self.timer.end("get_all_moves_for_piece")
         return result
     
     # given a list of Move, it applies them in order (the moves are supposed to be altready legal)
     def apply_moves(self, moves_list:list):
+        self.timer.start("apply_moves")
         sequence_list = []
         for move in moves_list:
             self.board[move.start[0]][move.start[1]] = EMPTY
@@ -309,6 +317,7 @@ class Board:
                 sequence_list.append(Move((capturing_result[1][0], capturing_result[1][1]), 0, captured_piece, True))
                 if captured_piece == KING:
                     self.king = None
+        self.timer.end("apply_moves")
         return sequence_list
     
     # given a list of Move, it applies them in reverse order and from end to start (the moves are supposed to be altready legal)
@@ -334,6 +343,7 @@ class Board:
     
     # returns all the current possible moves in the board, based on the specified color
     def get_all_moves(self, color, moves):
+        self.timer.start("get_all_moves")
         result = []
         move_sequence = self.apply_moves(moves)
         positions = self.get_all_pieces_of_color(color)
@@ -342,6 +352,7 @@ class Board:
             for mv in moves:
                 result.append(mv)
         self.reverse_moves(move_sequence)
+        self.timer.end("get_all_moves")
         return result
     
     def get_king(self):
