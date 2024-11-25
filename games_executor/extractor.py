@@ -15,12 +15,13 @@ from tqdm import tqdm
 #     return parsed_board
 
 if __name__ == "__main__":
-    path = "games_executor/logs"
+    path = "logs"
     files = os.listdir(path)
     files.sort()
     
     result_moves = []
     result_games = []
+    names_games = []
     for i, filename in enumerate(tqdm(files, desc="Loading files")):
         file_path = os.path.join(path, filename)
         if os.path.isfile(file_path):
@@ -37,6 +38,7 @@ if __name__ == "__main__":
                         for line in filtered_lines]
                 if moves != [] : # null moves to be discarded
                     result_moves.append(np.array(moves))
+                    names_games.append(np.array(filename))
                     
                     # Check result of match
                     last_non_empty_line = next((line.strip() for line in reversed(lines) if line.strip()), None)
@@ -47,6 +49,7 @@ if __name__ == "__main__":
                         result_games.append("I")                                                 # interrupted / bad formatted
                         print(file_path)
                     
+    names_games = np.array(names_games, dtype=str)
     result_moves = np.array(result_moves, dtype=object)
     result_games = np.array(result_games, dtype=str)
                 
@@ -55,5 +58,6 @@ if __name__ == "__main__":
     
     # Optionally save the results
     # np.save("dataset_tabelle.npy", result_tables)
-    np.save("games_executor/dataset_moves.npy", result_moves)
-    np.save("games_executor/dataset_results.npy", result_games)
+    np.save("datasets/dataset_moves.npy", result_moves)
+    np.save("datasets/dataset_results.npy", result_games)
+    np.save("datasets/dataset_names.npy", names_games)

@@ -1,6 +1,7 @@
 from board import *
 import numpy as np
 import unittest
+from search import Node
 
 
 '''
@@ -57,6 +58,23 @@ class TestBoard(unittest.TestCase):
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'WHITE', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY']
+            ])
+        } 
+        return Board(state)
+    
+    def initialize_Board_4_case(self) -> Board:
+        state = {
+            'turn': 'WHITE',
+            'board': np.array([
+                ['EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'WHITE'],
+                ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
+                ['BLACK', 'EMPTY', 'EMPTY', 'BLACK', 'KING', 'EMPTY', 'WHITE', 'EMPTY', 'BLACK'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
+                ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'BLACK'],
+                ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY']
             ])
         } 
         return Board(state)
@@ -157,6 +175,12 @@ class TestBoard(unittest.TestCase):
         position_set_target = set([(1,1), (7,6), (2,7), (2,6), (1,6), (2,6), (3,6), (4,6), (5,6), (1,1)])
         self.assertEqual(set(board.get_highlighted_escape_cells()), position_set_target, "Wrong highlighted escape cells")
 
+    def test_search(self):
+        board = self.initialize_Board_4_case()
+        board.pretty_print()
+        node = Node(board)
+        score, move = node.minimax_alpha_beta(True, "grey", 3)
+        print(f"\n\nscore = {score}\nmove = {move}")
         
 
 

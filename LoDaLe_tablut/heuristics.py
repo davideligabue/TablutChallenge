@@ -1,13 +1,13 @@
 from board import *
 
-def heuristic_1(state: Board) -> int:
-    pass
+def heuristic_1(board: Board) -> int:
+    return 1
 
 def heuristic_2(state: Board) -> int:
-    pass
+    return 2
 
 def heuristic_3(state: Board) -> int:
-    pass
+    return 3
 
 def grey_heuristic(board: Board) -> int:
     ''' 
