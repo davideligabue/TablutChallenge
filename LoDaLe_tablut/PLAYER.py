@@ -5,14 +5,15 @@ from board import Board
 from utils import *
 from search import Node
 import traceback
+from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3
+
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
-H_FLAGS = ["grey", "1", "2", "3"]
+H_FLAGS = ["grey", "flag_1", "flag_2", "flag_3"]
 
 VERBOSE = True      # quickly enable/disable verbose
               
-
 def main():
     
     ## Check that there aren't missing or excessing args ##
@@ -48,7 +49,7 @@ def main():
         sys.exit(1)
     
     ## Initialize the socket ##
-    sock = SocketManager(ip, port)
+    sock = SocketManager(ip, port, player_name=f"{h_flag}") # ho tolto LoDaLe solo per il limite di caratteris
     sock.create_socket()
     sock.connect()
     
@@ -56,13 +57,18 @@ def main():
     ### GAME CYCLE ################################################################
     ###############################################################################
     
+    err_count = 0
     try:
         while True:
             initial_time = time.time()
             
             ## 1) Read current state / state updated by the opponent move
             try: current_state = sock.get_state()
-            except TypeError: pass # if loses can't read
+            except TypeError: 
+                if err_count==0 : 
+                    err_count += 1
+                    pass # if loses can't read
+                else : raise Exception("Server error")
             board = Board(current_state)
 
             # if VERBOSE : print(f"Current table:\n{current_state}")
@@ -73,26 +79,44 @@ def main():
             # If we are still playing
             match current_state["turn"] :
                 case _ if current_state["turn"] == color:
-                    if VERBOSE : print("It'sock your turn")
+                    if VERBOSE : print("It's your turn")
 
                     ## 2) Compute the move
                     timeout = timeout - (time.time() - initial_time) # consider initialization time   
                     
                     n = Node(board)  
-                    score, move = n.minimax_alpha_beta(
-                                maximizing_player=(color=="WHITE"),
-                                h_flag=h_flag,
-                                depth=3
-                            )
 
-                    if VERBOSE : 
-                        print(move)
+                    # Seleziona euristica
+                    match h_flag:
+                        case "flag_1": heuristic = heuristic_1
+                        case "flag_2": heuristic = heuristic_2
+                        case "flag_3": heuristic = heuristic_3
+                        case "grey": heuristic = grey_heuristic
+                        case _ : raise ValueError(f"{h_flag} isn't an available heuristic")
+
+                    # Chiama l'algoritmo
+                    score, move = n.minimax_alpha_beta(
+                        maximizing_player=(color=="WHITE"),
+                        h_flag=h_flag,
+                        depth=2,
+                        heuristic=heuristic
+                    )
+                    n.plot_tree(heuristic=heuristic)
+
+                    if move is None:
+                        print("All moves scored -inf, selecting a default move.")
+                        move = n.get_children(color)[0].state[-1]
+
+                    print(f"Score={score}")
+
+                    if VERBOSE : print(move)
 
                     ## 3) Send the move
                     sock.send_move(move.to_alfanum_tuple())
                     
                     ## 4) Read the new updated state after my move
                     current_state = sock.get_state()
+                    board = Board(current_state) 
                     
                     # memorize my move
                     if VERBOSE : 
@@ -108,7 +132,7 @@ def main():
                     sys.exit(0)
                     
                 case "DRAW":
-                    if VERBOSE : print("It'sock a draw!")
+                    if VERBOSE : print("It's a draw!")
                     sys.exit(0)
                     
                 case _ :

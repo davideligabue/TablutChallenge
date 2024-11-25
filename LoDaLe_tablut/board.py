@@ -17,6 +17,7 @@ CAMPS = {
     "left" : [(3,0), (4,0), (5,0), (4,1)],     # left camps
     "right" : [(3,8), (4,8), (5,8), (4,7)]      # right camps
 }
+CAMPS["not-border"] = [camp[3] for camp in CAMPS.values()]
 CAMPS["all"] = CAMPS["up"] + CAMPS["down"] + CAMPS["left"] + CAMPS["right"]
 
 ESCAPES = {   
@@ -212,6 +213,10 @@ class Board:
             return False
         # if a black piece is outside a camp it cannot re-enter
         if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
+            return False
+        # if a white piece tries to overcome a camp
+        if  (move.piece in [WHITE, KING]) and \
+            (CAMP[0] in self.segment_occupation(move.start, move.end)["str"]) :
             return False
         return True
     

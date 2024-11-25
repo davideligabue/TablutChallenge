@@ -5,8 +5,8 @@ import numpy as np
 
 class SocketManager:
     
-    def __init__(self, ip, port):
-        self.name = "LoDaLe"
+    def __init__(self, ip, port, player_name):
+        self.name = player_name
         self._ip = ip
         self._port = port
         self._sock = None
@@ -52,16 +52,9 @@ class SocketManager:
         return data
     
     def get_state(self):
-        # TODO: correggere letture da parte del perdente (non legge bene)
-        '''
-        File "/Users/pelle/Development/GitHub/tablut-challenge/LoDaLe_tablut/socket_manager.py", line 55, in get_state
-            len_bytes = struct.unpack('>i', self.recvall(4))[0]
-                        ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
-        TypeError: a bytes-like object is required, not 'NoneType'
-        '''
         len_bytes = struct.unpack('>i', self.recvall(4))[0]
         current_state_server_bytes = self._sock.recv(len_bytes)
-        print("Ricevuti ", len(current_state_server_bytes))
+        # print("Ricevuti ", len(current_state_server_bytes))
 
         # Converting byte into json
         json_current_state_server = json.loads(current_state_server_bytes) 
