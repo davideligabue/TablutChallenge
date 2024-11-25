@@ -1,10 +1,10 @@
 from typing import List, Tuple
-from board import Board, Move
-from utils import *
 import networkx as nx
 import matplotlib.pyplot as plt
+import random
 
 VERBOSE = True
+ID = 0
 
 class Node:
     
@@ -14,35 +14,36 @@ class Node:
     
     def __init__(   
             self,  
-            board: Board,
-            state: List[Move] = [], 
+            state: List,
             depth: int = 0
         ):
         
         # Attributes
-        self.board = board
+        global ID
+        self.id = ID
+        ID += 1
         self.state = state
         self.children = []                  
         self.depth = depth                  # 0 if is the root
-
-    def __eq__(self, other: 'Node') -> bool:
-        return self.state == other.state
+        self.score = []
+    
     
     def __repr__(self) -> str:
         return f"Node({self.state})"
     
-    def get_children(self, color) -> List['Node']:
+    def set_score(self, score):
+        self.score = score
+    
+    def get_children(self) -> List['Node']:
         # Lazy loading
         if len(self.children) != 0: 
             return self.children
         else :
-            moves = self.board.get_all_moves(color, self.state)
-            for m in moves: # all the pieces
-                # Update the list of moves
+            n_moves = random.randint(1,5)
+            for _ in range(n_moves):
                 new_state = self.state.copy()
-                new_state.append(m)
+                new_state.append(random.randint(-5,5))
                 self.children.append(Node(
-                    board=self.board,
                     state=new_state,
                     depth=self.depth+1,
                 ))        
@@ -51,13 +52,7 @@ class Node:
     def plot_tree(self, heuristic=None):
         def add_edges_and_nodes(graph, node, parent=None):
             # Converte lo stato in stringa per usarlo come etichetta univoca
-            label = str(node.state)
-            if heuristic:
-                # Applica le mosse di backtrack per calcolare l'euristica
-                backtrack_moves = node.board.apply_moves(node.state)
-                h_value = heuristic(node.board)
-                node.board.reverse_moves(backtrack_moves)
-                label += f"\n(h={h_value})"
+            label = str([node.id, node.score])
 
             # Aggiunge il nodo al grafo
             graph.add_node(label)
@@ -70,45 +65,13 @@ class Node:
 
         # Creazione del grafo
         graph = nx.DiGraph()
-        root_label = str(self.state)  # Usa la rappresentazione stringa dello stato root
+        # root_label = str(self.state)  # Usa la rappresentazione stringa dello stato root
         add_edges_and_nodes(graph, self)
-
-        # Funzione per generare le posizioni per il layout ad albero
-        def hierarchy_pos(G, root=None, width=1.0, vert_gap=0.2, vert_loc=0, xcenter=0.5):
-            def _hierarchy_pos(G, root, width, vert_gap, vert_loc, xcenter, pos=None, parent=None):
-                if pos is None:
-                    pos = {root: (xcenter, vert_loc)}
-                else:
-                    pos[root] = (xcenter, vert_loc)
-                children = list(G.neighbors(root))
-                if not isinstance(G, nx.DiGraph) and parent is not None:
-                    children.remove(parent)
-                if len(children) != 0:
-                    dx = width / len(children)
-                    nextx = xcenter - width / 2 - dx / 2
-                    for child in children:
-                        nextx += dx
-                        pos = _hierarchy_pos(G, child, width=dx, vert_gap=vert_gap,
-                                            vert_loc=vert_loc - vert_gap, xcenter=nextx, pos=pos,
-                                            parent=root)
-                return pos
-
-            return _hierarchy_pos(G, root, width, vert_gap, vert_loc, xcenter)
-
-        # Verifica che il nodo radice sia presente nel grafo
-        # if root_label not in graph.nodes:
-        #     raise ValueError(f"Il nodo radice '{root_label}' non è presente nel grafo. "
-        #                     f"Nodi disponibili: {list(graph.nodes)}")
-
-        # Genera il layout e disegna il grafo
-        
-        # CUSTOM
-        # pos = hierarchy_pos(graph, root=root_label)
         
         pos = nx.nx_pydot.pydot_layout(graph, prog="dot")  # Migliore per strutture ad albero
 
         plt.figure(figsize=(12, 8))
-        nx.draw(graph, pos, with_labels=True, node_size=3000, node_color="lightblue", font_size=10, font_weight="bold")
+        nx.draw(graph, pos, with_labels=True, node_size=500, node_color="lightblue", font_size=5, font_weight="bold")
         plt.title("Tree Plot")
         plt.show()
 
@@ -120,19 +83,13 @@ class Node:
             self,
             maximizing_player: bool,
             depth: int,
-            heuristic: callable,
             alpha: float = -float('inf'),
             beta: float = float('inf')
-        ) -> Tuple[int, Move]:
+        ):
         
-        # Determina il colore del giocatore corrente
-        color = "WHITE" if maximizing_player else "BLACK"
-
         # Caso base: profondità 0 o nodo foglia
-        if depth == 0 or not self.get_children(color):
-            backtrack_moves = self.board.apply_moves(self.state)
-            score = heuristic(self.board)
-            self.board.reverse_moves(backtrack_moves)
+        if depth == 0 or not self.get_children():
+            score = sum(self.state)
             return score, None
 
         # Inizializza i valori per il calcolo
@@ -140,14 +97,14 @@ class Node:
         res_eval = -float('inf') if maximizing_player else float('inf')
 
         # Itera sui figli del nodo corrente
-        for child in self.get_children(color):
+        for child in self.get_children():
             eval, _ = child.minimax_alpha_beta(
                 maximizing_player=not maximizing_player,
                 depth=depth - 1,
-                heuristic=heuristic,
                 alpha=alpha,
                 beta=beta
             )
+            child.set_score(eval)
 
             if maximizing_player:
                 if eval > res_eval:
@@ -164,3 +121,8 @@ class Node:
                 break
 
         return res_eval, best_move
+
+node = Node([0])
+score, _ = node.minimax_alpha_beta(True, 3)
+node.set_score(score)
+node.plot_tree()

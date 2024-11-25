@@ -97,11 +97,10 @@ def main():
                     # Chiama l'algoritmo
                     score, move = n.minimax_alpha_beta(
                         maximizing_player=(color=="WHITE"),
-                        h_flag=h_flag,
                         depth=2,
                         heuristic=heuristic
                     )
-                    n.plot_tree(heuristic=heuristic)
+                    # n.plot_tree(heuristic=heuristic)
 
                     if move is None:
                         print("All moves scored -inf, selecting a default move.")

@@ -215,8 +215,7 @@ class Board:
         if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
             return False
         # if a white piece tries to overcome a camp
-        if  (move.piece in [WHITE, KING]) and \
-            (CAMP[0] in self.segment_occupation(move.start, move.end)["str"]) :
+        if (CAMP[0] in self.segment_occupation(move.start, move.end)["str"]) :
             return False
         return True
     
