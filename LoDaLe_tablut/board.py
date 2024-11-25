@@ -97,6 +97,9 @@ class Move:
             color = "BLACK"
         return (alfnum_start, alfnum_end, color)
     
+    def __eq__(self, other):
+        return (self.start == other.start) and (self.end == other.end) and (self.piece == other.piece)
+    
     def __str__(self):
         start, end, _ = self.to_alfanum_tuple() 
         return f'Move {self.piece} : {start} --> {end}'
@@ -214,9 +217,6 @@ class Board:
         # if a black piece is outside a camp it cannot re-enter
         if (move.end in CAMPS['all']) and (move.start not in CAMPS['all']):
             return False
-        # if a white piece tries to overcome a camp
-        if (CAMP[0] in self.segment_occupation(move.start, move.end)["str"]) :
-            return False
         return True
     
     def is_king_escaped(self):
@@ -277,6 +277,7 @@ class Board:
         if not self.is_within_bounds(pos):
             raise Exception("Position not in the grid for 'get_all_moves_for_piece' call")
         piece = self.get_cell(pos)
+        is_in_camp = piece == BLACK and pos in CAMPS["all"]
         if piece == EMPTY or piece == CAMP or piece == ESCAPE:
             raise Exception("Empty piece when calling 'get_all_moves_for_piece'")
         # coordinates of all the cells on the border of the grid moving orthogonally
@@ -288,7 +289,11 @@ class Board:
         result = []
         for direction in segment_occupations:
             for i in range(len(direction["str"])):
-                if direction["str"][i] == BLACK[0] or direction["str"][i] == WHITE[0] or direction["str"][i] == KING[0]:
+                if (piece == BLACK and is_in_camp) and (direction["str"][i] != EMPTY[0] and \
+                                                        direction["str"][i] != ESCAPE[0] and \
+                                                        direction["str"][i] != CAMP[0]  ):
+                    break
+                elif (direction["str"][i] != EMPTY[0] and direction["str"][i] != ESCAPE[0]):
                     break
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):
@@ -306,7 +311,7 @@ class Board:
             for escape in escapes: # for each escape check the stright direction (according to the vector direction)
                 check_pos = (escape[0] + vector[0], escape[1] + vector[1]) # start from that escape
                 # check until you reach a black or a camp. For a king it's important to highlight the cells even if they trespass a WHITE
-                while self.get_cell(check_pos) != BLACK and self.get_cell(check_pos) != CAMP:
+                while self.get_cell(check_pos) != BLACK and self.get_cell(check_pos) != CAMP and not self.is_within_bounds(check_pos):
                     result.append(check_pos) # add that position
                     check_pos = (check_pos[0] + vector[0], check_pos[1] + vector[1]) # move toward vector direction
         return result
