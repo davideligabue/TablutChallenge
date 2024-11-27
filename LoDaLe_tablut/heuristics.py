@@ -134,17 +134,17 @@ def grey_heuristic(board: Board, weights=None) -> int:
 
     # Use weight to optimize the module of the score
     # W1 = 3    # Bilancia la distanza dall'escape
-    W2 = 800  # Diminuisce l'enfasi sui percorsi liberi verso l'escape
-    W3 = 40   # Incentiva percorsi liberi solo se l'escape non è immediato
-    W4 = 25   # Migliora la protezione del re
-    W5 = 15   # Diminuire l'effetto negativo delle minacce
-    W6 = 8    # Diminuire l'effetto negativo delle minacce più lontane
-    W7 = 12   # Migliora leggermente la protezione lontana
-    W8 = 30   # Riduce l'enfasi su rombo
-    W9 = 60   # Diminuire l'effetto negativo di escape coperti
-    W10 = 150 # Riduce l'enfasi su doppi escape coperti
+    W2 = 1  # Diminuisce l'enfasi sui percorsi liberi verso l'escape
+    W3 = 1   # Incentiva percorsi liberi solo se l'escape non è immediato
+    W4 = 1   # Migliora la protezione del re
+    W5 = 1   # Diminuire l'effetto negativo delle minacce
+    W6 = 1    # Diminuire l'effetto negativo delle minacce più lontane
+    W7 = 1   # Migliora leggermente la protezione lontana
+    W8 = 1   # Riduce l'enfasi su rombo
+    W9 = 0.5   # Diminuire l'effetto negativo di escape coperti
+    W10 = 0.5 # Riduce l'enfasi su doppi escape coperti
     W11 = 10  # Bilancia il vantaggio numerico
-    W12 = 15  # Migliora la protezione delle escapes per i bianchi
+    W12 = 1  # Migliora la protezione delle escapes per i bianchi
     # Use a dict for better usability and debug
     scorings = {
 

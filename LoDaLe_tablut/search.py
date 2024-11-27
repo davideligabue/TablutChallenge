@@ -36,7 +36,9 @@ class Node:
         if len(self.children) != 0: 
             return self.children
         else :
+            backtrack_moves = self.board.apply_moves(self.state)
             moves = self.board.get_all_moves(color, self.state)
+            self.board.reverse_moves(backtrack_moves)
             for m in moves: # all the pieces
                 # Update the list of moves
                 new_state = self.state.copy()
@@ -150,12 +152,12 @@ class Node:
             )
 
             if maximizing_player:
-                if eval > res_eval:
+                if eval >= res_eval:
                     res_eval = eval
                     best_move = child.state[-1]
                 alpha = max(alpha, eval)
             else:
-                if eval < res_eval:
+                if eval <= res_eval:
                     res_eval = eval
                     best_move = child.state[-1]
                 beta = min(beta, eval)

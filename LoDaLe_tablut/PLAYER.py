@@ -104,14 +104,14 @@ def main():
                     # Chiama l'algoritmo
                     score, move = n.minimax_alpha_beta(
                         maximizing_player=(color=="WHITE"),
-                        depth=2,
+                        depth=3,
                         heuristic=heuristic
                     )
                     # n.plot_tree(heuristic=heuristic)
 
-                    if move is None:
-                        print("All moves scored -inf, selecting a default move.")
-                        move = n.get_children(color)[0].state[-1]
+                    # if move is None:
+                    #     print("All moves scored -inf, selecting a default move.")
+                    #     move = n.get_children(color)[0].state[-1]
 
                     print(f"Score={score}")
 
