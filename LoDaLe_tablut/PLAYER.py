@@ -17,7 +17,7 @@ VERBOSE = True      # quickly enable/disable verbose
 def main():
     
     ## Check that there aren't missing or excessing args ##
-    if len(sys.argv) != 5:
+    if len(sys.argv) < 4:
         if VERBOSE : print("Wrong number of args, it should be: python3 __main__.py <color(White/Black)> <timeout(seconds)> <IP_server>")
         sys.exit(1)
     
@@ -42,11 +42,18 @@ def main():
         sys.exit(1)
     port = PORT[color]
     
-    # - Heuristic FLAG        # TODO: togliere
+    ## Optimization args ####   TODO: togliere o assicurarsi funzioni anche se non passati
+    # - Heuristic FLAG        
     h_flag = sys.argv[4]
     if h_flag not in H_FLAGS:
         if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
         sys.exit(1)
+    
+    # - Weights    # TODO: fare appena si trova euristica decente
+    # weights = sys.argv[5]
+    # if h_flag not in H_FLAGS:
+    #     if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
+    #     sys.exit(1)
     
     ## Initialize the socket ##
     sock = SocketManager(ip, port, player_name=f"{h_flag}") # ho tolto LoDaLe solo per il limite di caratteris

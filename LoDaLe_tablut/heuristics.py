@@ -1,15 +1,30 @@
 from board import *
 
-def heuristic_1(board: Board) -> int:
-    return 1
+def heuristic_1(board: Board, weights=None) -> int:
+    blacks = board.get_all_pieces_of_color(BLACK)
+    num_blacks = len(blacks)
+    return -num_blacks
 
-def heuristic_2(state: Board) -> int:
-    return 2
+def heuristic_2(board: Board, weights=None) -> int:
+    whites = board.get_all_pieces_of_color(WHITE)
+    num_whites = len(whites)
+    return num_whites
 
-def heuristic_3(state: Board) -> int:
-    return 3
+def heuristic_3(board: Board, weights=None) -> int:
+    surrounding_escapes = 0
+    surrounding_blacks = 0
+    king_pos = board.get_king()
+    for j in range(1,3):
+        king_ring = board.ring_occupation(king_pos, j)["str"]
+        for i in range(4):
+            if king_ring[i*2] == ESCAPE[0]:
+                surrounding_escapes += 1
+            if king_ring[i*2] == BLACK[0]:
+                surrounding_blacks += 1
+    return surrounding_escapes - surrounding_blacks # >0 for W and <0 for B
+    
 
-def grey_heuristic(board: Board) -> int:
+def grey_heuristic(board: Board, weights=None) -> int:
     ''' 
     MAX = white
 
