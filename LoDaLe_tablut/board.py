@@ -112,6 +112,7 @@ class Board:
         self.turn = state['turn']
         self.board = np.transpose(np.array(state['board']))
         king_pos = np.where(self.board == KING)
+        self.king_captured = False
         if king_pos[0].size == 0:
             self.king = None
         elif king_pos[0].size == 1:
@@ -223,7 +224,7 @@ class Board:
         return self.king in ESCAPES["all"]
     
     def is_king_captured(self):
-        return self.king == None
+        return self.king_captured
     
     # returns a tuple (True, pos) if this move brings to the capture of a piece in the 'pos' position
     # else it returns (False, xx). IT DOESN'T CHECK WHETHER IS A VALID MOVE (you should check before calling this method)
@@ -330,7 +331,7 @@ class Board:
                 # add the capture action to the sequence list so it can be tracked down and eventually reversed
                 sequence_list.append(Move((capturing_result[1][0], capturing_result[1][1]), 0, captured_piece, True))
                 if captured_piece == KING:
-                    self.king = None
+                    self.king_captured = True
         return sequence_list
     
     # given a list of Move, it applies them in reverse order and from end to start (the moves are supposed to be altready legal)
