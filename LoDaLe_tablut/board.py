@@ -364,7 +364,10 @@ class Board:
     def get_all_moves(self, color, moves):
         result = []
         move_sequence = self.apply_moves(moves)
-        positions = self.get_all_pieces_of_color(color)
+        if color == WHITE:
+            positions = self.get_all_pieces_of_color(WHITE) + self.get_all_pieces_of_color(KING)
+        else:
+            positions = self.get_all_pieces_of_color(BLACK)
         for i in range(len(positions)):
             moves = self.get_all_moves_for_piece(positions[i])
             for mv in moves:
