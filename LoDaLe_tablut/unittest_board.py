@@ -68,14 +68,14 @@ class TestBoard(unittest.TestCase):
             'board': np.array([
                 ['EMPTY', 'WHITE', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'WHITE'],
-                ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY'],
+                ['BLACK', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK'],
                 ['BLACK', 'EMPTY', 'EMPTY', 'BLACK', 'KING', 'EMPTY', 'WHITE', 'EMPTY', 'BLACK'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY'],
                 ['EMPTY', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'EMPTY', 'BLACK'],
                 ['EMPTY', 'EMPTY', 'EMPTY', 'EMPTY', 'BLACK', 'BLACK', 'EMPTY', 'EMPTY', 'EMPTY']
-            ])
+            ]) # 1,2 black -> 1,6 blsck
         } 
         return Board(state)
     
@@ -157,7 +157,9 @@ class TestBoard(unittest.TestCase):
         # escape king
         board.apply_moves([Move((2,4),(2,0),KING)])
         self.assertTrue(board.is_king_escaped(), "King should be escaped")
-
+        # trespass a camp for a black piece
+        board = self.initialize_Board_4_case()
+        self.assertSequenceEqual([Move((1,2), (1,3), BLACK)], board.get_all_moves_for_piece((1,2)), "Black should not move through a camp")
 
     def test_get_global_possibilities(self):
         board = self.initialize_Board_simple_case()
@@ -167,20 +169,13 @@ class TestBoard(unittest.TestCase):
         self.assertTrue(len(board.get_all_pieces_of_color(KING)) == 1, "Wrong king found")
         # test get all moves
         self.assertTrue(len(board.get_all_moves(KING, [])) == 12, "Wrong number of possible moves for king")
-        self.assertTrue(len(board.get_all_moves(KING, [])) + len(board.get_all_moves(BLACK, [])) + len(board.get_all_moves(WHITE, [])) == 55, "Wrong number of possible total moves")
+        self.assertTrue(len(board.get_all_moves(KING, [])) + len(board.get_all_moves(BLACK, [])) + len(board.get_all_moves(WHITE, [])) == 45, "Wrong number of possible total moves")
 
     def test_highlighted_cells(self):
         board = self.initialize_Board_third_case()
         # 1,1  7,6   2,7  2,6  1,6  2,6  3,6  4,6  5,6  1,1
         position_set_target = set([(1,1), (7,6), (2,7), (2,6), (1,6), (2,6), (3,6), (4,6), (5,6), (1,1)])
         self.assertEqual(set(board.get_highlighted_escape_cells()), position_set_target, "Wrong highlighted escape cells")
-
-    def test_search(self):
-        board = self.initialize_Board_4_case()
-        board.pretty_print()
-        node = Node(board)
-        score, move = node.minimax_alpha_beta(True, "grey", 3)
-        print(f"\n\nscore = {score}\nmove = {move}")
         
 
 
