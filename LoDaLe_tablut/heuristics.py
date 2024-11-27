@@ -119,10 +119,10 @@ def grey_heuristic(board: Board, weights=None) -> int:
 
 
     ### Check covered escapes by white ##########################################################################################
-    # highlighted_cells = board.get_highlighted_escape_cells()
-    # highlighted_cells = np.array(highlighted_cells)
-    # intersection_highlighted_cells = np.isin(whites, highlighted_cells).all(axis=1)
-    # white_in_highlighted_cells = np.sum(intersection_highlighted_cells)
+    highlighted_cells = board.get_highlighted_escape_cells()
+    highlighted_cells = np.array(highlighted_cells)
+    intersection_highlighted_cells = np.isin(whites, highlighted_cells).all(axis=1)
+    white_in_highlighted_cells = np.sum(intersection_highlighted_cells)
     ##############################################################################################################################
 
 
