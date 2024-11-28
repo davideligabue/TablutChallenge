@@ -3,12 +3,13 @@ from board import *
 def heuristic_1(board: Board, weights=None) -> int:
     blacks = board.get_all_pieces_of_color(BLACK)
     num_blacks = len(blacks)
-    return -num_blacks
+    return -num_blacks  # plays for black
 
 def heuristic_2(board: Board, weights=None) -> int:
     whites = board.get_all_pieces_of_color(WHITE)
     num_whites = len(whites)
-    return num_whites
+
+    return num_whites   # plays for white
 
 def heuristic_3(board: Board, weights=None) -> int:
     surrounding_escapes = 0
@@ -21,7 +22,7 @@ def heuristic_3(board: Board, weights=None) -> int:
                 surrounding_escapes += 1
             if king_ring[i*2] == BLACK[0]:
                 surrounding_blacks += 1
-    return surrounding_escapes - surrounding_blacks # >0 for W and <0 for B
+    return surrounding_escapes - surrounding_blacks     # >0 for W and <0 for B
     
 
 def grey_heuristic(board: Board, weights=None) -> int:
@@ -44,7 +45,7 @@ def grey_heuristic(board: Board, weights=None) -> int:
     num_covered_escapes = 0             # 10. The black may tend to cover the escapes
     num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
     # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
-    white_in_highlighted_cells = 0      # 12. Escapes which are covered first by a white
+    # white_in_highlighted_cells = 0      # 12. Escapes which are covered first by a white
     num_whites = 0                      # 13. The number of whites
     num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
@@ -56,6 +57,9 @@ def grey_heuristic(board: Board, weights=None) -> int:
     num_whites = len(whites)
     num_blacks = len(blacks)
     king_pos = board.get_king()
+    whites = np.array(whites)
+    blacks = np.array(blacks)
+
 
     intersection_rombus = np.isin(blacks, ROMBUS_POS).all(axis=1)
     num_rombus_pos = np.sum(intersection_rombus)
@@ -118,11 +122,13 @@ def grey_heuristic(board: Board, weights=None) -> int:
 
 
 
-    ### Check covered escapes by white ##########################################################################################
+    ### Check if king is in highlighted cells ####################################################################################
     highlighted_cells = board.get_highlighted_escape_cells()
-    highlighted_cells = np.array(highlighted_cells)
-    intersection_highlighted_cells = np.isin(whites, highlighted_cells).all(axis=1)
-    white_in_highlighted_cells = np.sum(intersection_highlighted_cells)
+    # print(highlighted_cells)
+    # highlighted_cells = np.array(highlighted_cells)
+    king_in_highlighted_cells = any((king_pos == cell).all() for cell in highlighted_cells)
+    # if king_in_highlighted_cells:
+    #     print("KING IN HIGHLIGHTED CELLS !!!")
     ##############################################################################################################################
 
 
@@ -134,17 +140,18 @@ def grey_heuristic(board: Board, weights=None) -> int:
 
     # Use weight to optimize the module of the score
     # W1 = 3    # Bilancia la distanza dall'escape
-    W2 = 1  # Diminuisce l'enfasi sui percorsi liberi verso l'escape
-    W3 = 1   # Incentiva percorsi liberi solo se l'escape non è immediato
-    W4 = 1   # Migliora la protezione del re
-    W5 = 1   # Diminuire l'effetto negativo delle minacce
-    W6 = 1    # Diminuire l'effetto negativo delle minacce più lontane
-    W7 = 1   # Migliora leggermente la protezione lontana
-    W8 = 1   # Riduce l'enfasi su rombo
-    W9 = 0.5   # Diminuire l'effetto negativo di escape coperti
-    W10 = 0.5 # Riduce l'enfasi su doppi escape coperti
-    W11 = 10  # Bilancia il vantaggio numerico
-    W12 = 1  # Migliora la protezione delle escapes per i bianchi
+    W2 = 2      # Diminuisce l'enfasi sui percorsi liberi verso l'escape
+    W3 = 1      # Incentiva percorsi liberi solo se l'escape non è immediato
+    W4 = 10      # Migliora la protezione del re
+    W5 = 20     # Diminuire l'effetto negativo delle minacce
+    W6 = 5      # Diminuire l'effetto negativo delle minacce più lontane
+    W7 = 1      # Migliora leggermente la protezione lontana
+    W8 = 5      # Riduce l'enfasi su rombo
+    W9 = 0.5    # Diminuire l'effetto negativo di escape coperti
+    W10 = 0.5   # Riduce l'enfasi su doppi escape coperti
+    W11 = 20    # Considera il numero di bianchi vivi
+    W12 = 10    # Considera il numero di neri vivi
+    W13 = 5     # Porta il re in buone posizioni vicino agli escapes (highlighted cells)
     # Use a dict for better usability and debug
     scorings = {
 
@@ -173,7 +180,7 @@ def grey_heuristic(board: Board, weights=None) -> int:
         # resterebbe più o meno uguale e dobbiamo rimarcare che sia una brutta idea
         'surrounding_protection_score':
             W4 * surrounding_protection     if free_routes_to_escapes == 0
-                                            else - W4 * surrounding_protection,
+                                            else - 0.5 * W4 * surrounding_protection,
 
         # The king should consider how much he is in danger only if he is not in a winning
         # position, so if he is not that much surrounded by blacks and he is next to an escape
@@ -181,13 +188,13 @@ def grey_heuristic(board: Board, weights=None) -> int:
             - W5 * surrounding_threats  if free_routes_to_escapes == 0
                                         else 0,
 
-        # Same as before (???)
+        # The king should consider if in the next move a blacks can became adjacent
         # NOTE: ancora meno importante se il re è vicino agli escapes
         'possible_threats_score':
-            - W6 * possible_threats     if free_routes_to_escapes == 0
+            - W6 * possible_checkers     if free_routes_to_escapes == 0
                                         else 0,
 
-        # Same as before (???)
+        # The king should consider if in the next move a white can became adjacent
         # NOTE: ancora meno importante se il re è vicino agli escapes
         'possible_protection_score':
             W7 * possible_protection    if free_routes_to_escapes == 0
@@ -210,16 +217,21 @@ def grey_heuristic(board: Board, weights=None) -> int:
             - W10 * num_double_covered_escapes  if free_routes_to_escapes == 0
                                                 else 0,
 
-        # The player must consider the numerical advantage only if he is not in
+        # The player must consider the number of white alive only if he is not in
         # a winning position
-        'numerical_advantage' :
-            W11 * (num_whites-num_blacks)   if free_routes_to_escapes == 0
+        'white_alive' :
+            W11 * num_whites   if free_routes_to_escapes == 0
                                             else 0,
         
+        # The player must consider the number of black alive only if he is not in
+        # a winning position
+        'black_alive' :
+            W12 * num_blacks if free_routes_to_escapes == 0
+                                            else 0,
         # The player must consider the escape protection only if he is not in
         # a winning position
         'escape_protection' :
-            W12 * (white_in_highlighted_cells)  if free_routes_to_escapes == 0
+            W13                             if free_routes_to_escapes == 0 and king_in_highlighted_cells
                                                 else 0
     }
 
