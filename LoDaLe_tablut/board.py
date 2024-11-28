@@ -312,7 +312,7 @@ class Board:
             for escape in escapes: # for each escape check the stright direction (according to the vector direction)
                 check_pos = (escape[0] + vector[0], escape[1] + vector[1]) # start from that escape
                 # check until you reach a black or a camp. For a king it's important to highlight the cells even if they trespass a WHITE
-                while self.get_cell(check_pos) != BLACK and self.get_cell(check_pos) != CAMP and not self.is_within_bounds(check_pos):
+                while self.get_cell(check_pos) != BLACK and self.get_cell(check_pos) != CAMP and self.is_within_bounds(check_pos):
                     result.append(check_pos) # add that position
                     check_pos = (check_pos[0] + vector[0], check_pos[1] + vector[1]) # move toward vector direction
         return result

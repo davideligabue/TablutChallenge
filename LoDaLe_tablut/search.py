@@ -3,6 +3,7 @@ from board import Board, Move
 from utils import *
 import networkx as nx
 import matplotlib.pyplot as plt
+from heuristics import INF
 
 VERBOSE = True
 
@@ -123,8 +124,8 @@ class Node:
             maximizing_player: bool,
             depth: int,
             heuristic: callable,
-            alpha: float = -float('inf'),
-            beta: float = float('inf')
+            alpha: float = -INF,
+            beta: float = INF
         ) -> Tuple[int, Move]:
         
         # Determina il colore del giocatore corrente
@@ -133,13 +134,13 @@ class Node:
         # Caso base: profondità 0 o nodo foglia
         if depth == 0 or not self.get_children(color):
             backtrack_moves = self.board.apply_moves(self.state)
-            score = heuristic(self.board)
+            score = heuristic(self.board) / self.depth
             self.board.reverse_moves(backtrack_moves)
             return score, None
 
         # Inizializza i valori per il calcolo
         best_move = None
-        res_eval = -float('inf') if maximizing_player else float('inf')
+        res_eval = -INF if maximizing_player else INF
 
         # Itera sui figli del nodo corrente
         for child in self.get_children(color):

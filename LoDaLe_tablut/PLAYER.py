@@ -6,10 +6,12 @@ from utils import *
 from search import Node
 import traceback
 from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3
+import random
 
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
+P_FLAGS = ["search", "random", "ml"]
 H_FLAGS = ["grey", "flag_1", "flag_2", "flag_3"]
 
 VERBOSE = True      # quickly enable/disable verbose
@@ -43,11 +45,24 @@ def main():
     port = PORT[color]
     
     ## Optimization args ####   TODO: togliere o assicurarsi funzioni anche se non passati
+    
+    # - Player FLAG
+    FLAG = sys.argv[4] 
+    if FLAG not in P_FLAGS:
+        if VERBOSE : print(f"Wrong player_flag (must be in {P_FLAGS})")
+        sys.exit(1) 
+    
     # - Heuristic FLAG        
-    h_flag = sys.argv[4]
+    h_flag = sys.argv[5]
     if h_flag not in H_FLAGS:
         if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
         sys.exit(1)
+    match h_flag:
+        case "flag_1": heuristic = heuristic_1
+        case "flag_2": heuristic = heuristic_2
+        case "flag_3": heuristic = heuristic_3
+        case "grey": heuristic = grey_heuristic
+        case _ : raise ValueError(f"{h_flag} isn't an available heuristic")
     
     # - Weights    # TODO: fare appena si trova euristica decente
     # weights = sys.argv[5]
@@ -56,7 +71,9 @@ def main():
     #     sys.exit(1)
     
     ## Initialize the socket ##
-    sock = SocketManager(ip, port, player_name=f"{h_flag}") # ho tolto LoDaLe solo per il limite di caratteris
+    player_name = FLAG
+    if FLAG=="search" : player_name += f"_{h_flag}"
+    sock = SocketManager(ip, port, player_name) # ho tolto LoDaLe solo per il limite di caratteris
     sock.create_socket()
     sock.connect()
     
@@ -91,30 +108,32 @@ def main():
                     ## 2) Compute the move
                     timeout = timeout - (time.time() - initial_time) # consider initialization time   
                     
-                    n = Node(board)  
+                    match FLAG :
+                        case "random":
+                            n = Node(board)  
+                            moves = [c.state[-1] for c in n.get_children(color)]
+                            try:
+                                move = random.sample(moves, 1)[0]
+                            except Exception:
+                                if VERBOSE : print("Random: il root non ha figli")
+                            
+                        case "search" :
+                            # Initialize current node
+                            n = Node(board)  
 
-                    # Seleziona euristica
-                    match h_flag:
-                        case "flag_1": heuristic = heuristic_1
-                        case "flag_2": heuristic = heuristic_2
-                        case "flag_3": heuristic = heuristic_3
-                        case "grey": heuristic = grey_heuristic
-                        case _ : raise ValueError(f"{h_flag} isn't an available heuristic")
+                            # Call alpha-beta pruning
+                            score, move = n.minimax_alpha_beta(
+                                maximizing_player=(color=="WHITE"),
+                                depth=3,
+                                heuristic=heuristic
+                            )
+                            
+                            ## Eventually print the exploration tree
+                            # n.plot_tree(heuristic=heuristic)
+                            
+                            if VERBOSE : print(f"Score={score}")
 
-                    # Chiama l'algoritmo
-                    score, move = n.minimax_alpha_beta(
-                        maximizing_player=(color=="WHITE"),
-                        depth=3,
-                        heuristic=heuristic
-                    )
-                    # n.plot_tree(heuristic=heuristic)
-
-                    # if move is None:
-                    #     print("All moves scored -inf, selecting a default move.")
-                    #     move = n.get_children(color)[0].state[-1]
-
-                    print(f"Score={score}")
-
+                   
                     if VERBOSE : print(move)
 
                     ## 3) Send the move

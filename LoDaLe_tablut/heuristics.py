@@ -1,5 +1,7 @@
 from board import *
 
+INF = 1_000_000
+
 def heuristic_1(board: Board, weights=None) -> int:
     blacks = board.get_all_pieces_of_color(BLACK)
     num_blacks = len(blacks)
@@ -73,10 +75,10 @@ def grey_heuristic(board: Board, weights=None) -> int:
 
     # If the king got captured ==> white lost
     if board.is_king_captured():
-        return -float('inf')
+        return -INF
     
     if board.is_king_escaped():
-        return float('inf')
+        return INF
 
 
 
