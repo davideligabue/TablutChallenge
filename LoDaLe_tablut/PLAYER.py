@@ -100,11 +100,10 @@ def main():
                         case "flag_3": heuristic = heuristic_3
                         case "grey": heuristic = grey_heuristic
                         case _ : raise ValueError(f"{h_flag} isn't an available heuristic")
-
-                    # Chiama l'algoritmo
+                    
                     score, move = n.minimax_alpha_beta(
                         maximizing_player=(color=="WHITE"),
-                        depth=3,
+                        depth=2,
                         heuristic=heuristic
                     )
                     # n.plot_tree(heuristic=heuristic)
