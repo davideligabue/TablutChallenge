@@ -97,8 +97,12 @@ def grey_heuristic(board: Board, weights=None) -> int:
     # Check the column and the row of the king
     for i in range(4):
         column_check = board.segment_occupation(king_pos, checking_arrive[i])["str"]
-        if column_check[-1] == ESCAPE[0] and (all(c == EMPTY[0] for c in column_check[:-1]) or len(column_check) == 1):
+        if  len(column_check)>0 and \
+            column_check[-1] == ESCAPE[0] and \
+            (all(c == EMPTY[0] for c in column_check[:-1]) or len(column_check) == 1):
+                
             free_routes_to_escapes += 1
+            
         else:
             for car in column_check:
                 if car == BLACK[0]:
@@ -128,7 +132,7 @@ def grey_heuristic(board: Board, weights=None) -> int:
     highlighted_cells = board.get_highlighted_escape_cells()
     # print(highlighted_cells)
     # highlighted_cells = np.array(highlighted_cells)
-    king_in_highlighted_cells = any((king_pos == cell).all() for cell in highlighted_cells)
+    king_in_highlighted_cells = any((king_pos == cell) for cell in highlighted_cells)
     # if king_in_highlighted_cells:
     #     print("KING IN HIGHLIGHTED CELLS !!!")
     ##############################################################################################################################

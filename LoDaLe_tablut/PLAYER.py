@@ -72,7 +72,8 @@ def main():
     
     ## Initialize the socket ##
     player_name = FLAG
-    if FLAG=="search" : player_name += f"_{h_flag}"
+    if FLAG=="search" : 
+        player_name += f"_{h_flag}"
     sock = SocketManager(ip, port, player_name) # ho tolto LoDaLe solo per il limite di caratteris
     sock.create_socket()
     sock.connect()
@@ -133,7 +134,6 @@ def main():
                             
                             if VERBOSE : print(f"Score={score}")
 
-                   
                     if VERBOSE : print(move)
 
                     ## 3) Send the move
