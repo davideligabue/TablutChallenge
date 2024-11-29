@@ -11,8 +11,8 @@ import random
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
-P_FLAGS = ["search", "random", "ml"]
-H_FLAGS = ["grey", "flag_1", "flag_2", "flag_3"]
+P_FLAGS = ["search", "random"]
+H_FLAGS = ["grey", "flag-1", "flag-2", "flag-3"]
 
 VERBOSE = True      # quickly enable/disable verbose
               
@@ -52,28 +52,30 @@ def main():
         if VERBOSE : print(f"Wrong player_flag (must be in {P_FLAGS})")
         sys.exit(1) 
     
-    # - Heuristic FLAG        
-    h_flag = sys.argv[5]
-    if h_flag not in H_FLAGS:
-        if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
-        sys.exit(1)
-    match h_flag:
-        case "flag_1": heuristic = heuristic_1
-        case "flag_2": heuristic = heuristic_2
-        case "flag_3": heuristic = heuristic_3
-        case "grey": heuristic = grey_heuristic
-        case _ : raise ValueError(f"{h_flag} isn't an available heuristic")
+    # - Heuristic FLAG  
+    if FLAG=="search":    
+        h_flag = sys.argv[5]
+        if h_flag not in H_FLAGS:
+            if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
+            sys.exit(1)
+        match h_flag:
+            case "flag-1": heuristic = heuristic_1
+            case "flag-2": heuristic = heuristic_2
+            case "flag-3": heuristic = heuristic_3
+            case "grey": heuristic = grey_heuristic
+            case _ : raise ValueError(f"{h_flag} isn't an available heuristic")
     
-    # - Weights    # TODO: fare appena si trova euristica decente
-    # weights = sys.argv[5]
-    # if h_flag not in H_FLAGS:
-    #     if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
-    #     sys.exit(1)
+    # # - Weights    # TODO: fare appena si trova euristica decente
+    # if FLAG=="search":
+    #     weights = sys.argv[6]
+    #     if h_flag not in H_FLAGS:
+    #         if VERBOSE : print(f"Wrong heuristic_flag (must be in {H_FLAGS})")
+    #         sys.exit(1)
     
     ## Initialize the socket ##
     player_name = FLAG
-    if FLAG=="search" : 
-        player_name += f"_{h_flag}"
+    if player_name=="search":
+        player_name=h_flag
     sock = SocketManager(ip, port, player_name) # ho tolto LoDaLe solo per il limite di caratteris
     sock.create_socket()
     sock.connect()
@@ -96,7 +98,6 @@ def main():
                 else : raise Exception("Server error")
             board = Board(current_state)
 
-            # if VERBOSE : print(f"Current table:\n{current_state}")
             if VERBOSE : 
                 print(f"Current table:\n")
                 board.pretty_print()
@@ -128,11 +129,15 @@ def main():
                                 depth=3,
                                 heuristic=heuristic
                             )
-                            
-                            ## Eventually print the exploration tree
-                            # n.plot_tree(heuristic=heuristic)
-                            
-                            if VERBOSE : print(f"Score={score}")
+
+                            if VERBOSE : 
+                                print("\nExploration recap:")
+                                # n.plot_tree(heuristic=heuristic)
+                                print(f"- Score={score}")
+                                print(f"- Nodes_explored={n.get_num_nodes("explored")}")
+                                print(f"- Time={round(time.time()-initial_time, 3)}s")
+                                print()
+                                
 
                     if VERBOSE : print(move)
 
@@ -147,7 +152,6 @@ def main():
                     current_state = sock.get_state()
                     board = Board(current_state) 
                     
-                    # memorize my move
                     if VERBOSE : 
                         print(f"After my move:\n")
                         board.pretty_print()

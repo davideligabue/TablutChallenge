@@ -4,6 +4,7 @@ from utils import *
 import networkx as nx
 import matplotlib.pyplot as plt
 from heuristics import INF
+from functools import lru_cache
 
 VERBOSE = True
 
@@ -25,6 +26,7 @@ class Node:
         self.state = state
         self.children = []                  
         self.depth = depth                  # 0 if is the root
+        self.is_explored = False
 
     def __eq__(self, other: 'Node') -> bool:
         return self.state == other.state
@@ -32,11 +34,25 @@ class Node:
     def __repr__(self) -> str:
         return f"Node({self.state})"
     
+    def get_num_nodes(self, mode="all"):
+        """
+        - "all" - Count all nodes in the tree, regardless of exploration status.
+        - "explored" - Count only nodes for which get_children() was called.
+        """
+        count = 1 if mode == "all" or (mode == "explored" and self.is_explored) else 0
+        count += sum(child.get_num_nodes(mode) for child in self.children)
+        return count
+    
+    @lru_cache(maxsize=1000)
+    def get_heuristic_value(heuristic, board_state):
+        return heuristic(board_state)  # Replace with actual heuristic calculation
+    
     def get_children(self, color) -> List['Node']:
         # Lazy loading
-        if len(self.children) != 0: 
+        if self.is_explored: 
             return self.children
         else :
+            self.is_explored = True
             backtrack_moves = self.board.apply_moves(self.state)
             moves = self.board.get_all_moves(color, self.state)
             self.board.reverse_moves(backtrack_moves)
