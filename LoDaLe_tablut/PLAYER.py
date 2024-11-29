@@ -71,9 +71,10 @@ def main():
     #     sys.exit(1)
     
     ## Initialize the socket ##
-    player_name = FLAG
-    if FLAG=="search" : 
-        player_name += f"_{h_flag}"
+    # player_name = FLAG
+    # if FLAG=="search" : 
+    #     player_name += f"_{h_flag}"
+    player_name = h_flag
     sock = SocketManager(ip, port, player_name) # ho tolto LoDaLe solo per il limite di caratteris
     sock.create_socket()
     sock.connect()
@@ -96,7 +97,6 @@ def main():
                 else : raise Exception("Server error")
             board = Board(current_state)
 
-            # if VERBOSE : print(f"Current table:\n{current_state}")
             if VERBOSE : 
                 print(f"Current table:\n")
                 board.pretty_print()
@@ -128,11 +128,15 @@ def main():
                                 depth=3,
                                 heuristic=heuristic
                             )
-                            
-                            ## Eventually print the exploration tree
-                            # n.plot_tree(heuristic=heuristic)
-                            
-                            if VERBOSE : print(f"Score={score}")
+
+                            if VERBOSE : 
+                                print("\nExploration recap:")
+                                # n.plot_tree(heuristic=heuristic)
+                                print(f"- Score={score}")
+                                print(f"- Nodes_explored={n.get_num_nodes("explored")}")
+                                print(f"- Time={round(time.time()-initial_time, 3)}s")
+                                print()
+                                
 
                     if VERBOSE : print(move)
 
@@ -143,7 +147,6 @@ def main():
                     current_state = sock.get_state()
                     board = Board(current_state) 
                     
-                    # memorize my move
                     if VERBOSE : 
                         print(f"After my move:\n")
                         board.pretty_print()

@@ -3,6 +3,7 @@
 # Running hyperparameters
 NUM_TESTS=1                                     # each run should be deterministic
 H_FLAGS=("grey" "flag_1" "flag_2" "flag_3")     # TODO: aggiungere le flags
+player_flag="search"
 
 # Paths
 # Server is in current directory to simplify the process
@@ -74,9 +75,9 @@ for ((i=1; i<=NUM_TESTS; i++)); do
         sleep 1
 
         # Run the players
-        python3 "$PLAYER_PATH/PLAYER.py" WHITE 60 127.0.0.1 "$heuristic_1" > "$WHITE_LOG" 2>&1 &
+        python3 "$PLAYER_PATH/PLAYER.py" WHITE 60 127.0.0.1 "$player_flag" "$heuristic_1" > "$WHITE_LOG" 2>&1 &
         WHITE_PID=$!
-        python3 "$PLAYER_PATH/PLAYER.py" BLACK 60 127.0.0.1 "$heuristic_2" > "$BLACK_LOG" 2>&1 &
+        python3 "$PLAYER_PATH/PLAYER.py" BLACK 60 127.0.0.1 "$player_flag" "$heuristic_2" > "$BLACK_LOG" 2>&1 &
         BLACK_PID=$!
         
         # Wait server and players

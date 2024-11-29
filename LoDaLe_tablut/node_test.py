@@ -26,6 +26,7 @@ class Node:
         self.children = []                  
         self.depth = depth                  # 0 if is the root
         self.score = []
+        self.is_explored = False 
     
     
     def __repr__(self) -> str:
@@ -39,6 +40,7 @@ class Node:
         if len(self.children) != 0: 
             return self.children
         else :
+            self.is_explored = True  # Mark the node as explored
             n_moves = random.randint(1,5)
             for _ in range(n_moves):
                 new_state = self.state.copy()
@@ -48,6 +50,20 @@ class Node:
                     depth=self.depth+1,
                 ))        
             return self.children
+        
+    def get_num_nodes(self, mode="all"):
+        """
+        Counts the number of nodes in the tree based on the given mode.
+        
+        Parameters:
+            mode (str): 
+                - "all" - Count all nodes in the tree, regardless of exploration status.
+                
+                - "explored" - Count only nodes for which get_children() was called.
+        """
+        count = 1 if mode == "all" or (mode == "explored" and self.is_explored) else 0
+        count += sum(child.get_num_nodes(mode) for child in self.children)
+        return count
         
     def plot_tree(self, heuristic=None):
         def add_edges_and_nodes(graph, node, parent=None):
@@ -125,4 +141,6 @@ class Node:
 node = Node([0])
 score, _ = node.minimax_alpha_beta(True, 3)
 node.set_score(score)
+print(node.get_num_explored_nodes("explored"))
+print(node.get_num_explored_nodes())
 node.plot_tree()
