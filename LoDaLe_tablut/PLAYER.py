@@ -71,7 +71,7 @@ def main():
                 if VERBOSE : print("It's your turn")
 
                 ## 2) Compute the move
-                timeout = timeout - (time.time() - initial_time) # consider initialization time   
+                
                 # Initialize current node
                 n = Node(board)  
 
@@ -89,7 +89,6 @@ def main():
                     # n.plot_tree(heuristic=heuristic)
                     print(f"- Score={score}")
                     print(f"- Nodes_explored={n.get_num_nodes("explored")}")
-                    print(f"- Time={round(time.time()-initial_time, 3)}s")
                     print()
                             
 
