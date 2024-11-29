@@ -21,11 +21,9 @@ class SocketManager:
 
     def connect(self):
         if self._sock is None:
-            print("Socket not initialized yet.")
             return
         try:
             self._sock.connect((self._ip, self._port))
-            print(f"Connected to the server {self._ip}:{self._port}")
             
             # Send the player's name to the server
             self._sock.send(struct.pack('>i', len(self.name)))
@@ -39,7 +37,6 @@ class SocketManager:
     def close_socket(self):
         if self._sock:
             self._sock.close()
-            print("Socket closed.")
             
     def recvall(self, n):
         # Helper function to recv n bytes or return None if EOF is hit

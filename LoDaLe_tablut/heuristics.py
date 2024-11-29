@@ -46,8 +46,6 @@ def grey_heuristic(board: Board, depth:int, weights=None) -> int:
     num_rombus_pos = 0                  # 9. The black must tend to have a rombus disposition
     num_covered_escapes = 0             # 10. The black may tend to cover the escapes
     num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
-    # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
-    # white_in_highlighted_cells = 0    # 12. Escapes which are covered first by a white
     num_whites = 0                      # 13. The number of whites
     num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
