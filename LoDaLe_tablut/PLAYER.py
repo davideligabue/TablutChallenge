@@ -52,7 +52,6 @@ def main():
     err_count = 0
     try:
         while True:
-            initial_time = time.time()
             
             ## 1) Read current state / state updated by the opponent move
             try: current_state = sock.get_state()
@@ -68,60 +67,60 @@ def main():
                 board.pretty_print()
 
             # If we are still playing
-            match current_state["turn"] :
-                case _ if current_state["turn"] == color:
-                    if VERBOSE : print("It's your turn")
+            if current_state["turn"] == color:
+                if VERBOSE : print("It's your turn")
 
-                    ## 2) Compute the move
-                    timeout = timeout - (time.time() - initial_time) # consider initialization time   
-                    # Initialize current node
-                    n = Node(board)  
+                ## 2) Compute the move
+                timeout = timeout - (time.time() - initial_time) # consider initialization time   
+                # Initialize current node
+                n = Node(board)  
 
-                    heuristic = grey_heuristic
+                heuristic = grey_heuristic
 
-                    # Call alpha-beta pruning
-                    score, move = n.minimax_alpha_beta(
-                        maximizing_player=(color=="WHITE"),
-                        depth=3,
-                        heuristic=heuristic
-                    )
+                # Call alpha-beta pruning
+                score, move = n.minimax_alpha_beta(
+                    maximizing_player=(color=="WHITE"),
+                    depth=3,
+                    heuristic=heuristic
+                )
 
-                    if VERBOSE : 
-                        print("\nExploration recap:")
-                        # n.plot_tree(heuristic=heuristic)
-                        print(f"- Score={score}")
-                        print(f"- Nodes_explored={n.get_num_nodes("explored")}")
-                        print(f"- Time={round(time.time()-initial_time, 3)}s")
-                        print()
-                                
+                if VERBOSE : 
+                    print("\nExploration recap:")
+                    # n.plot_tree(heuristic=heuristic)
+                    print(f"- Score={score}")
+                    print(f"- Nodes_explored={n.get_num_nodes("explored")}")
+                    print(f"- Time={round(time.time()-initial_time, 3)}s")
+                    print()
+                            
 
-                    if VERBOSE : print(move)
+                if VERBOSE : print(move)
 
-                    ## 3) Send the move
-                    sock.send_move(move.to_alfanum_tuple())
+                ## 3) Send the move
+                sock.send_move(move.to_alfanum_tuple())
+                
+                ## 4) Read the new updated state after my move
+                current_state = sock.get_state()
+                board = Board(current_state) 
+                
+                if VERBOSE : 
+                    print(f"After my move:\n")
+                    board.pretty_print()
+              
                     
-                    ## 4) Read the new updated state after my move
-                    current_state = sock.get_state()
-                    board = Board(current_state) 
-                    
-                    if VERBOSE : 
-                        print(f"After my move:\n")
-                        board.pretty_print()
-                        
-                case "WHITEWIN":
-                    if VERBOSE : print("WHITE wins!")
-                    sys.exit(0)
-                    
-                case "BLACKWIN":
-                    if VERBOSE : print("BLACK wins!")
-                    sys.exit(0)
-                    
-                case "DRAW":
-                    if VERBOSE : print("It's a draw!")
-                    sys.exit(0)
-                    
-                case _ :
-                    if VERBOSE : print("Waiting for your opponent move...")
+            if current_state["turn"] == "WHITEWIN":
+                if VERBOSE : print("WHITE wins!")
+                sys.exit(0)
+                
+            if current_state["turn"] == "BLACKWIN":
+                if VERBOSE : print("BLACK wins!")
+                sys.exit(0)
+                
+            if current_state["turn"] == "DRAW":
+                if VERBOSE : print("It's a draw!")
+                sys.exit(0)
+                
+            else :
+                if VERBOSE : print("Waiting for your opponent move...")
 
     except Exception:
         if VERBOSE : print(f"An error occurred during the game:")
