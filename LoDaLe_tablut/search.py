@@ -134,7 +134,7 @@ class Node:
         # Caso base: profondità 0 o nodo foglia
         if depth == 0 or not self.get_children(color):
             backtrack_moves = self.board.apply_moves(self.state)
-            score = heuristic(self.board) / self.depth
+            score = heuristic(self.board, self.depth)
             self.board.reverse_moves(backtrack_moves)
             return score, None
 

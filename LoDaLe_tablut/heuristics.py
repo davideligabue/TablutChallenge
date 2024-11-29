@@ -27,7 +27,7 @@ def heuristic_3(board: Board, weights=None) -> int:
     return surrounding_escapes - surrounding_blacks     # >0 for W and <0 for B
     
 
-def grey_heuristic(board: Board, weights=None) -> int:
+def grey_heuristic(board: Board, depth:int, weights=None) -> int:
     ''' 
     MAX = white
 
@@ -47,7 +47,7 @@ def grey_heuristic(board: Board, weights=None) -> int:
     num_covered_escapes = 0             # 10. The black may tend to cover the escapes
     num_double_covered_escapes = 0      # 11. The black should prefer the double cover escapes (covers 2 with 1 pawn)
     # freecell_near_escapes = 0         # 12. The white should tend to cover free cells near escapes before black
-    # white_in_highlighted_cells = 0      # 12. Escapes which are covered first by a white
+    # white_in_highlighted_cells = 0    # 12. Escapes which are covered first by a white
     num_whites = 0                      # 13. The number of whites
     num_blacks = 0                      # 14. The number of blacks
     ####################################################################################################################################
@@ -71,16 +71,14 @@ def grey_heuristic(board: Board, weights=None) -> int:
     num_double_covered_escapes = np.sum(intersection_double_covered_escapes)
     ########################################################################################################################
 
-
-
-    # If the king got captured ==> white lost
-    if board.is_king_captured():
-        return -INF
     
+    # If the king got captured ==> white lost
     if board.is_king_escaped():
-        return INF
-
-
+        return INF - depth
+    
+    if board.is_king_captured():
+        return -INF + depth
+    
 
     ### CHECK ALL AROUND THE KING ###########################################################################################
     king_ring = board.ring_occupation(king_pos, 1)["str"]
@@ -130,32 +128,27 @@ def grey_heuristic(board: Board, weights=None) -> int:
 
     ### Check if king is in highlighted cells ####################################################################################
     highlighted_cells = board.get_highlighted_escape_cells()
-    # print(highlighted_cells)
-    # highlighted_cells = np.array(highlighted_cells)
     king_in_highlighted_cells = any((king_pos == cell) for cell in highlighted_cells)
-    # if king_in_highlighted_cells:
-    #     print("KING IN HIGHLIGHTED CELLS !!!")
     ##############################################################################################################################
 
 
     free_routes = 4 - possible_threats - possible_protection - surrounding_threats - surrounding_protection
 
 
-
     ### Compute scorings (DECIDE THE WEIGHTS also using non linear functions) #####################################
 
     # Use weight to optimize the module of the score
     # W1 = 3    # Bilancia la distanza dall'escape
-    W2 = 2      # Diminuisce l'enfasi sui percorsi liberi verso l'escape
+    W2 = 800   # Diminuisce l'enfasi sui percorsi liberi verso l'escape
     W3 = 1      # Incentiva percorsi liberi solo se l'escape non è immediato
-    W4 = 10      # Migliora la protezione del re
+    W4 = 10     # Migliora la protezione del re
     W5 = 20     # Diminuire l'effetto negativo delle minacce
     W6 = 5      # Diminuire l'effetto negativo delle minacce più lontane
     W7 = 1      # Migliora leggermente la protezione lontana
-    W8 = 5      # Riduce l'enfasi su rombo
-    W9 = 0.5    # Diminuire l'effetto negativo di escape coperti
-    W10 = 0.5   # Riduce l'enfasi su doppi escape coperti
-    W11 = 20    # Considera il numero di bianchi vivi
+    W8 = 10     # Riduce l'enfasi su rombo
+    W9 = 5      # Diminuire l'effetto negativo di escape coperti
+    W10 = 5     # Riduce l'enfasi su doppi escape coperti
+    W11 = 25    # Considera il numero di bianchi vivi
     W12 = 10    # Considera il numero di neri vivi
     W13 = 5     # Porta il re in buone posizioni vicino agli escapes (highlighted cells)
     # Use a dict for better usability and debug
@@ -240,8 +233,5 @@ def grey_heuristic(board: Board, weights=None) -> int:
             W13                             if free_routes_to_escapes == 0 and king_in_highlighted_cells
                                                 else 0
     }
-
-    # state.pretty_print()
-    # print(f"State evaluated with score {sum(scorings.values())}")
 
     return sum(scorings.values())

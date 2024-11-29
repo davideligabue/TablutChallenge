@@ -294,7 +294,7 @@ class Board:
                                                         direction["str"][i] != ESCAPE[0] and \
                                                         direction["str"][i] != CAMP[0]  ):
                     break
-                elif (direction["str"][i] != EMPTY[0] and direction["str"][i] != ESCAPE[0]):
+                elif not (piece == BLACK and is_in_camp) and (direction["str"][i] != EMPTY[0] and direction["str"][i] != ESCAPE[0]):
                     break
                 move = Move(pos, direction["cells"][i], piece)
                 if self.is_valid_move(move):

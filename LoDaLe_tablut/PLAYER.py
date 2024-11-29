@@ -136,6 +136,10 @@ def main():
 
                     if VERBOSE : print(move)
 
+                    print(f"Le mosse possibili per il pezzo in (8,4) sono:\t{board.get_all_moves_for_piece((8,4))}")
+                    a, b = board.is_a_capture_move(move)
+                    print(f"Catturo qualcosa? {a}\t cosa catturo: {b}")
+
                     ## 3) Send the move
                     sock.send_move(move.to_alfanum_tuple())
                     
