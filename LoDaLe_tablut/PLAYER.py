@@ -5,7 +5,7 @@ from board import Board
 from utils import *
 from search import Node
 import traceback
-from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3
+from heuristics import grey_heuristic
 import random
 
 
