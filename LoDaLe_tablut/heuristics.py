@@ -163,7 +163,7 @@ def grey_heuristic(board: Board, depth:int, weights=None) -> int:
         # The king must always consider options where he can win in one move
         # NOTE: forse potremmo usare direttamente +infinito ma così magari eviteremmo
         # scelte in cui ci sono più di 2 vie libere (btw vittoria assicurata)
-        'free_routes_to_escapes_score': W2 * free_routes_to_escapes,
+        'free_routes_to_escapes_score': INF-depth-1 if free_routes_to_escapes>0 else 0,
 
         # The king must consider free routes that don't lead to victory only if
         # there are not free routes to escapes

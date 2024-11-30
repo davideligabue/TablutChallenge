@@ -5,9 +5,8 @@ from board import Board
 from utils import *
 from search import Node
 import traceback
-from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3
+from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3, INF
 import random
-
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
@@ -108,8 +107,6 @@ def main():
                     if VERBOSE : print("It's your turn")
 
                     ## 2) Compute the move
-                    timeout = timeout - (time.time() - initial_time) # consider initialization time   
-                    
                     match FLAG :
                         case "random":
                             n = Node(board)  
@@ -122,13 +119,23 @@ def main():
                         case "search" :
                             # Initialize current node
                             n = Node(board)  
-
-                            # Call alpha-beta pruning
-                            score, move = n.minimax_alpha_beta(
+                            
+                            score, move = n.breadth_first(
                                 maximizing_player=(color=="WHITE"),
-                                depth=3,
                                 heuristic=heuristic
                             )
+                            
+                            timeout = timeout - (time.time() - initial_time) # consider initialization time   
+
+                            if (score,color)!=(INF-1, "WHITE") and (score,color)!=(-INF+1, "BLACK"):
+                                score_ab, move_ab = n.minimax_alpha_beta(
+                                    maximizing_player=(color=="WHITE"),
+                                    depth=3,
+                                    heuristic=heuristic, 
+                                    timeout=timeout
+                                )
+                                if type(score_ab)==int:
+                                    move = move_ab                                
 
                             if VERBOSE : 
                                 print("\nExploration recap:")
@@ -140,10 +147,6 @@ def main():
                                 
 
                     if VERBOSE : print(move)
-
-                    print(f"Le mosse possibili per il pezzo in (8,4) sono:\t{board.get_all_moves_for_piece((8,4))}")
-                    a, b = board.is_a_capture_move(move)
-                    print(f"Catturo qualcosa? {a}\t cosa catturo: {b}")
 
                     ## 3) Send the move
                     sock.send_move(move.to_alfanum_tuple())

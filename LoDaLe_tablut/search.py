@@ -5,6 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from heuristics import INF
 from functools import lru_cache
+import time
 
 VERBOSE = True
 
@@ -135,18 +136,45 @@ class Node:
     # SEARCH ALGORITHMS ##########################################################################################################################################
     ##############################################################################################################################################################    
     
+    def breadth_first(
+            self,
+            maximizing_player: bool,
+            heuristic: callable
+        ) -> Tuple[int, Move]:
+        
+        # Determina il colore del giocatore corrente
+        color = "WHITE" if maximizing_player else "BLACK"
+        
+        # Collect the moves of all the children
+        moves = []
+        for c in self.get_children(color):
+            backtrack_moves = self.board.apply_moves(c.state)
+            score = heuristic(self.board, self.depth+1)
+            self.board.reverse_moves(backtrack_moves)
+            moves.append((score, c.state[-1]))
+            
+        # Select the best
+        moves.sort(key=lambda x: x[0], reverse=maximizing_player)
+        return moves[0]   
+    
     def minimax_alpha_beta(
             self,
             maximizing_player: bool,
             depth: int,
             heuristic: callable,
-            alpha: float = -INF,
-            beta: float = INF
+            timeout: float,
+            alpha: float = -float('inf'),
+            beta: float = float('inf')
         ) -> Tuple[int, Move]:
-        
         # Determina il colore del giocatore corrente
         color = "WHITE" if maximizing_player else "BLACK"
-
+        
+        start_time = time.time()
+        
+        # Controlla se il timeout è scaduto
+        if time.time() - start_time > timeout:
+            return "end", None
+        
         # Caso base: profondità 0 o nodo foglia
         if depth == 0 or not self.get_children(color):
             backtrack_moves = self.board.apply_moves(self.state)
@@ -156,17 +184,25 @@ class Node:
 
         # Inizializza i valori per il calcolo
         best_move = None
-        res_eval = -INF if maximizing_player else INF
+        res_eval = -float('inf') if maximizing_player else float('inf')
 
         # Itera sui figli del nodo corrente
         for child in self.get_children(color):
+            # Controlla se il timeout è scaduto prima di ogni iterazione
+            if time.time() - start_time > timeout:
+                return res_eval, best_move  # Restituisci il miglior risultato finora
+
             eval, _ = child.minimax_alpha_beta(
                 maximizing_player=not maximizing_player,
                 depth=depth - 1,
                 heuristic=heuristic,
+                timeout=timeout,
                 alpha=alpha,
                 beta=beta
             )
+            
+            if type(eval)==str:
+                return eval, None
 
             if maximizing_player:
                 if eval >= res_eval:
