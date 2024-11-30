@@ -1,5 +1,6 @@
 import ipaddress
 from collections import Counter
+import time
 
 
 def check_ip(ip):
@@ -53,3 +54,8 @@ def get_n_most_winning_move(dataset, results, n, color):
     move_counter = Counter(idx_moves)
     most_common_moves = move_counter.most_common(None) # all the results
     return most_common_moves
+
+def is_timeout(start_time, timeout, bonus=1) -> bool:
+    res = time.time() - start_time > timeout-bonus
+    # print(f"Timeout: ({time.time()} - {start_time} > {timeout} - {bonus}) ==== {res}")
+    return res

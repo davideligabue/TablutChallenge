@@ -7,6 +7,7 @@ from search import Node
 import traceback
 from heuristics import grey_heuristic, heuristic_1, heuristic_2, heuristic_3, INF
 import random
+import numpy as np
 
 PORT = {"WHITE":5800, "BLACK":5801}
 
@@ -84,6 +85,7 @@ def main():
     ###############################################################################
     
     err_count = 0
+    boards_history = []
     try:
         while True:
             initial_time = time.time()
@@ -96,6 +98,7 @@ def main():
                     pass # if loses can't read
                 else : raise Exception("Server error")
             board = Board(current_state)
+            boards_history.append(board.board.copy())
 
             if VERBOSE : 
                 print(f"Current table:\n")
@@ -112,30 +115,37 @@ def main():
                             n = Node(board)  
                             moves = [c.state[-1] for c in n.get_children(color)]
                             try:
-                                move = random.sample(moves, 1)[0]
+                                move = random.sample(moves,1)[0]
                             except Exception:
                                 if VERBOSE : print("Random: il root non ha figli")
                             
                         case "search" :
                             # Initialize current node
                             n = Node(board)  
-                            
+                                                        
                             score, move = n.breadth_first(
                                 maximizing_player=(color=="WHITE"),
-                                heuristic=heuristic
+                                heuristic=heuristic,
+                                history=boards_history
                             )
                             
-                            timeout = timeout - (time.time() - initial_time) # consider initialization time   
+                            # consider initialization time + bonus time to conclude communication
+                            timeout_move = timeout - (time.time()-initial_time) - 1
 
                             if (score,color)!=(INF-1, "WHITE") and (score,color)!=(-INF+1, "BLACK"):
                                 score_ab, move_ab = n.minimax_alpha_beta(
                                     maximizing_player=(color=="WHITE"),
-                                    depth=3,
+                                    depth=4,
                                     heuristic=heuristic, 
-                                    timeout=timeout
+                                    history=boards_history,
+                                    timeout=timeout_move,
+                                    start_time=time.time()
                                 )
-                                if type(score_ab)==int:
-                                    move = move_ab                                
+                                if type(score_ab)!=str:
+                                    move = move_ab       
+                                    score = score_ab                         
+                                else:
+                                    if VERBOSE : print("Timeout scattato")
 
                             if VERBOSE : 
                                 print("\nExploration recap:")
@@ -145,7 +155,6 @@ def main():
                                 print(f"- Time={round(time.time()-initial_time, 3)}s")
                                 print()
                                 
-
                     if VERBOSE : print(move)
 
                     ## 3) Send the move
@@ -154,6 +163,7 @@ def main():
                     ## 4) Read the new updated state after my move
                     current_state = sock.get_state()
                     board = Board(current_state) 
+                    boards_history.append(board.board.copy())
                     
                     if VERBOSE : 
                         print(f"After my move:\n")

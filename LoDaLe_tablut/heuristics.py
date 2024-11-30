@@ -27,7 +27,7 @@ def heuristic_3(board: Board, weights=None) -> int:
     return surrounding_escapes - surrounding_blacks     # >0 for W and <0 for B
     
 
-def grey_heuristic(board: Board, depth:int, weights=None) -> int:
+def grey_heuristic(board: Board, depth:int) -> int:
     ''' 
     MAX = white
 

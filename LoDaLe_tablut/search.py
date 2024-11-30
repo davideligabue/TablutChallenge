@@ -1,11 +1,11 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union, Optional
 from board import Board, Move
 from utils import *
 import networkx as nx
 import matplotlib.pyplot as plt
 from heuristics import INF
-from functools import lru_cache
 import time
+import numpy as np
 
 VERBOSE = True
 
@@ -43,10 +43,6 @@ class Node:
         count = 1 if mode == "all" or (mode == "explored" and self.is_explored) else 0
         count += sum(child.get_num_nodes(mode) for child in self.children)
         return count
-    
-    @lru_cache(maxsize=1000)
-    def get_heuristic_value(heuristic, board_state):
-        return heuristic(board_state)  # Replace with actual heuristic calculation
     
     def get_children(self, color) -> List['Node']:
         # Lazy loading
@@ -139,7 +135,8 @@ class Node:
     def breadth_first(
             self,
             maximizing_player: bool,
-            heuristic: callable
+            heuristic: callable,
+            history: List[Board]
         ) -> Tuple[int, Move]:
         
         # Determina il colore del giocatore corrente
@@ -149,7 +146,10 @@ class Node:
         moves = []
         for c in self.get_children(color):
             backtrack_moves = self.board.apply_moves(c.state)
-            score = heuristic(self.board, self.depth+1)
+            if any(np.array_equal(self.board.board, board) for board in history):  
+                score = 0
+            else:
+                score = heuristic(self.board, c.depth)
             self.board.reverse_moves(backtrack_moves)
             moves.append((score, c.state[-1]))
             
@@ -158,27 +158,32 @@ class Node:
         return moves[0]   
     
     def minimax_alpha_beta(
-            self,
-            maximizing_player: bool,
-            depth: int,
-            heuristic: callable,
-            timeout: float,
-            alpha: float = -float('inf'),
-            beta: float = float('inf')
-        ) -> Tuple[int, Move]:
+        self,
+        maximizing_player: bool,
+        depth: int,
+        heuristic: callable,
+        history: List[Board],
+        timeout: float,
+        start_time: float,
+        alpha: float = -float('inf'),
+        beta: float = float('inf')
+    ) -> Tuple[Union[int, str], Optional[Move]]:
+
+        if is_timeout(start_time, timeout) : return "timeout", None
+
         # Determina il colore del giocatore corrente
         color = "WHITE" if maximizing_player else "BLACK"
-        
-        start_time = time.time()
-        
-        # Controlla se il timeout è scaduto
-        if time.time() - start_time > timeout:
-            return "end", None
-        
+
         # Caso base: profondità 0 o nodo foglia
         if depth == 0 or not self.get_children(color):
+            
+            if is_timeout(start_time, timeout) : return "timeout", None
+            
             backtrack_moves = self.board.apply_moves(self.state)
-            score = heuristic(self.board, self.depth)
+            if any(np.array_equal(self.board.board, board) for board in history):
+                score = 0
+            else:
+                score = heuristic(self.board, self.depth)
             self.board.reverse_moves(backtrack_moves)
             return score, None
 
@@ -188,34 +193,34 @@ class Node:
 
         # Itera sui figli del nodo corrente
         for child in self.get_children(color):
-            # Controlla se il timeout è scaduto prima di ogni iterazione
-            if time.time() - start_time > timeout:
-                return res_eval, best_move  # Restituisci il miglior risultato finora
+
+            if is_timeout(start_time, timeout) : return "timeout", None
 
             eval, _ = child.minimax_alpha_beta(
                 maximizing_player=not maximizing_player,
                 depth=depth - 1,
                 heuristic=heuristic,
                 timeout=timeout,
+                start_time=start_time,
                 alpha=alpha,
-                beta=beta
+                beta=beta,
+                history=history
             )
-            
-            if type(eval)==str:
-                return eval, None
+
+            if eval == "timeout" : return "timeout", None  # Propaga il timeout verso l'alto
 
             if maximizing_player:
-                if eval >= res_eval:
+                if eval > res_eval:
                     res_eval = eval
                     best_move = child.state[-1]
                 alpha = max(alpha, eval)
             else:
-                if eval <= res_eval:
+                if eval < res_eval:
                     res_eval = eval
                     best_move = child.state[-1]
                 beta = min(beta, eval)
 
             if beta <= alpha:
-                break
+                break  # Alpha-beta pruning
 
         return res_eval, best_move
