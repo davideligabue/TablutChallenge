@@ -1,5 +1,5 @@
 import ipaddress
-from collections import Counter
+import time
 
 
 def check_ip(ip):
@@ -19,3 +19,7 @@ def find_all(original:str, tofind:str) -> list:
         if original[i] == tofind:
             result.append(i)
     return result
+
+def is_timeout(start_time, timeout, bonus=1) -> bool:
+    res = time.time() - start_time > timeout-bonus
+    return res

@@ -5,7 +5,7 @@ from board import Board
 from utils import *
 from search import Node
 import traceback
-from heuristics import grey_heuristic
+from heuristics import grey_heuristic, INF
 import random
 
 
@@ -41,7 +41,7 @@ def main():
         sys.exit(1)
     port = PORT[color]
     
-    sock = SocketManager(ip, port, player_name="LoDaLe") # ho tolto LoDaLe solo per il limite di caratteris
+    sock = SocketManager(ip, port, player_name="LoDaLe") 
     sock.create_socket()
     sock.connect()
     
@@ -50,8 +50,10 @@ def main():
     ###############################################################################
     
     err_count = 0
+    boards_history = []
     try:
         while True:
+            initial_time = time.time()
             
             ## 1) Read current state / state updated by the opponent move
             try: current_state = sock.get_state()
@@ -61,6 +63,7 @@ def main():
                     pass # if loses can't read
                 else : raise Exception("Server error")
             board = Board(current_state)
+            boards_history.append(board.board.copy())
 
             if VERBOSE : 
                 print(f"Current table:\n")
@@ -74,15 +77,31 @@ def main():
                 
                 # Initialize current node
                 n = Node(board)  
-
                 heuristic = grey_heuristic
+                
+                score, move = n.breadth_first(
+                                maximizing_player=(color=="WHITE"),
+                                heuristic=heuristic,
+                                history=boards_history
+                            )
+                            
+                # consider initialization time + bonus time to conclude communication
+                timeout_move = timeout - (time.time()-initial_time) - 1
 
-                # Call alpha-beta pruning
-                score, move = n.minimax_alpha_beta(
-                    maximizing_player=(color=="WHITE"),
-                    depth=3,
-                    heuristic=heuristic
-                )
+                if (score,color)!=(INF-1, "WHITE") and (score,color)!=(-INF+1, "BLACK"):
+                                score_ab, move_ab = n.minimax_alpha_beta(
+                                    maximizing_player=(color=="WHITE"),
+                                    depth=4,
+                                    heuristic=heuristic, 
+                                    history=boards_history,
+                                    timeout=timeout_move,
+                                    start_time=time.time()
+                                )
+                                if type(score_ab)!=str:
+                                    move = move_ab       
+                                    score = score_ab                         
+                                else:
+                                    if VERBOSE : print("Timeout scattato")
 
                 if VERBOSE : 
                     print("\nExploration recap:")
