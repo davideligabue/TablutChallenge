@@ -88,7 +88,7 @@ def main():
                     print("\nExploration recap:")
                     # n.plot_tree(heuristic=heuristic)
                     print(f"- Score={score}")
-                    print(f"- Nodes_explored={n.get_num_nodes("explored")}")
+                    print(f"- Nodes_explored={n.get_num_nodes('explored')}")
                     print()
                             
 
