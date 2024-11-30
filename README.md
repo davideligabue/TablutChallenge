@@ -1,6 +1,6 @@
 # LoDaLe Group
 
-LoDaLe is a Python client for the Ashton Tablut game developed for the tablut-challenge at University of Bologna. 
+LoDaLe is a Python client for the Ashton Tablut game, developed for the Tablut Challenge at the University of Bologna.
 
 ## Project Structure
 
@@ -23,8 +23,8 @@ LoDaLe is a Python client for the Ashton Tablut game developed for the tablut-ch
 ├── games_executor         # Application for comparing different players
 │   ├── ...
 |
-├── run_game.sh            # Script for launching the game
-├── run_game.bat           # Script for launching the game
+├── run_game.sh            # Script for launching the game in Unix
+├── run_game.bat           # Script for launching the game in Windows
 ```
 
 ## Launching
@@ -34,17 +34,5 @@ In order to launch the player type
 python3 PLAYER.py <color_player> <timeout> <server_ip>
 ```
 
-## Contribution
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Submit a pull request with a detailed description of the changes.
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
-
 ---
-Developed with ❤️ by Lorenzo Pellegrino, Leonardo Massaro and Davide Ligabue.
+Developed with ❤️ by [Lorenzo Pellegrino](https://github.com/lollopelle01), [Leonardo Massaro](https://github.com/leomass), and [Davide Ligabue](https://github.com/davideligabue).
