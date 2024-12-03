@@ -34,5 +34,11 @@ In order to launch the player type
 python3 PLAYER.py <color_player> <timeout> <server_ip>
 ```
 
+## Observations
+
+We did not have enough time to implement and test other ideas to improve the player, such as:
+- **Genetic algorithm** to refine the weights of the heuristics
+- **Iterative deepening** with **transposition table** over the alpha-beta cut, in order to guarantee a solution with respect to the available time.
+
 ---
 Developed with ❤️ by [Lorenzo Pellegrino](https://github.com/lollopelle01), [Leonardo Massaro](https://github.com/leomass), and [Davide Ligabue](https://github.com/davideligabue).
